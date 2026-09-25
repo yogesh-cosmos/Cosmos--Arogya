@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1"/>
+<meta name="theme-color" content="#ffffff"/>
+<meta name="description" content="COSMOS Arogya — Your AI Health Companion"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Arogya"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<title>COSMOS Arogya</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"/>
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png"/>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+:root{
+  --blue:#0A84FF;--blue-d:#0066CC;--blue-l:#E8F3FF;--blue-xl:#F5FAFF;
+  --teal:#00B39C;--teal-l:#E0FAF6;
+  --mint:#30D158;--mint-l:#E3FBE9;
+  --coral:#FF453A;--coral-l:#FFEBEA;
+  --amber:#FF9F0A;--amber-l:#FFF4E0;
+  --violet:#AF52DE;--violet-l:#F6EBFC;
+  --pink:#FF2D92;--pink-l:#FFE5F1;
+  --indigo:#5E5CE6;--indigo-l:#ECECFD;
+
+  --white:#FFFFFF;--bg:#F2F2F7;--bg2:#E5E5EA;--card:#FFFFFF;
+  --sep:rgba(60,60,67,.1);--sep2:rgba(60,60,67,.18);
+
+  --t1:#000000;--t2:#3C3C43;--t2o:rgba(60,60,67,.6);--t3:rgba(60,60,67,.4);--t4:rgba(60,60,67,.25);
+
+  --r-sm:10px;--r:16px;--r-lg:22px;--r-xl:28px;
+
+  --shadow-xs:0 1px 2px rgba(0,0,0,.04);
+  --shadow-sm:0 2px 8px rgba(0,0,0,.06);
+  --shadow:0 8px 24px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);
+  --shadow-lg:0 20px 48px rgba(0,0,0,.14),0 6px 16px rgba(0,0,0,.08);
+
+  --ease:cubic-bezier(.36,.66,.04,1);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+
+  --st:env(safe-area-inset-top,0px);
+  --sb:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--t1);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  overflow:hidden;-webkit-font-smoothing:antialiased;letter-spacing:-.01em;
+  overscroll-behavior:none;-webkit-user-select:none;user-select:none;touch-action:pan-y;}
+input,textarea,.symp-inp,.hp-search-wrap input,.chat-inp-row input{-webkit-user-select:text;user-select:text;}
+.app-scroll{overscroll-behavior-y:contain;}
+#app{height:100%;display:flex;flex-direction:column;position:relative;}
+button{font-family:inherit;cursor:pointer;-webkit-appearance:none;appearance:none;background:none;border:none;}
+input,textarea{font-family:inherit;-webkit-appearance:none;appearance:none;}
+svg{display:block;}
+::selection{background:var(--blue-l);}
+
+.scr{display:none;flex-direction:column;height:100%;overflow:hidden;}
+.scr.on{display:flex;animation:screenIn .4s var(--ease);}
+@keyframes screenIn{from{opacity:0}to{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse2{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes iconPop{from{opacity:0;transform:scale(.6) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+/* ══ SPLASH ══ */
+#scr-splash{background:#000;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.mesh-bg{position:absolute;inset:0;overflow:hidden;}
+.mesh-blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.55;animation:meshFloat 8s ease-in-out infinite;}
+.mesh-blob.b1{width:280px;height:280px;background:var(--blue);top:-80px;left:-60px;}
+.mesh-blob.b2{width:320px;height:320px;background:var(--teal);bottom:-100px;right:-80px;animation-delay:2s;}
+.mesh-blob.b3{width:240px;height:240px;background:var(--violet);top:40%;left:60%;animation-delay:4s;}
+@keyframes meshFloat{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(20px,-30px) scale(1.1)}66%{transform:translate(-20px,20px) scale(.95)}}
+.sp-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;}
+.sp-icon{width:100px;height:100px;border-radius:30px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;
+  margin-bottom:28px;box-shadow:0 20px 60px rgba(10,132,255,.3);animation:iconPop 1s var(--ease-spring);}
+.sp-icon svg{width:58px;height:58px;}
+.sp-name{font-size:30px;font-weight:800;color:#fff;letter-spacing:-.6px;animation:fadeUp .6s var(--ease) .3s both;}
+.sp-sub{font-size:12px;color:rgba(255,255,255,.55);margin-top:7px;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:600;animation:fadeUp .6s var(--ease) .4s both;}
+.sp-dots{margin-top:52px;display:flex;gap:8px;animation:fadeUp .6s var(--ease) .6s both;}
+.sp-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.3);}
+.sp-dot.active{background:#fff;animation:dotPulse 1.4s ease-in-out infinite;}
+.sp-dot:nth-child(2){animation-delay:.15s;}.sp-dot:nth-child(3){animation-delay:.3s;}
+@keyframes dotPulse{0%,100%{transform:scale(1);opacity:.4}50%{transform:scale(1.3);opacity:1}}
+
+/* ══ LANGUAGE ══ */
+#scr-lang{background:var(--white);}
+.lang-top{background:linear-gradient(160deg,#0A84FF 0%,#00B39C 100%);padding:calc(32px + var(--st)) 24px 32px;
+  text-align:center;position:relative;overflow:hidden;}
+.lang-top::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.15),transparent 60%);}
+.lang-logo-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:24px;position:relative;z-index:1;}
+.lang-logo-ico{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);
+  display:flex;align-items:center;justify-content:center;}
+.lang-logo-name{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.2px;}
+.lang-title{font-size:24px;font-weight:800;color:#fff;margin-bottom:8px;position:relative;z-index:1;letter-spacing:-.5px;}
+.lang-hint{font-size:12.5px;color:rgba(255,255,255,.8);line-height:1.6;position:relative;z-index:1;}
+.lang-list{flex:1;overflow-y:auto;padding:20px 20px 0;background:var(--bg);}
+.lang-list::-webkit-scrollbar{display:none;}
+.lang-btn{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:var(--r);background:var(--white);
+  margin-bottom:10px;transition:all .25s var(--ease);width:100%;text-align:left;box-shadow:var(--shadow-xs);
+  animation:slideUp .4s var(--ease) both;}
+.lang-btn:nth-child(1){animation-delay:.05s}.lang-btn:nth-child(2){animation-delay:.1s}
+.lang-btn:nth-child(3){animation-delay:.15s}.lang-btn:nth-child(4){animation-delay:.2s}.lang-btn:nth-child(5){animation-delay:.25s}
+.lang-btn:active{transform:scale(.98);background:var(--blue-xl);}
+.lang-btn.sel{background:var(--blue-l);box-shadow:0 0 0 2px var(--blue) inset;}
+.lang-flag{font-size:26px;flex-shrink:0;}
+.lang-inf{flex:1;}
+.lang-nm{font-size:15px;font-weight:700;color:var(--t1);}
+.lang-nat{font-size:12.5px;color:var(--t2o);margin-top:2px;}
+.lang-chk{width:24px;height:24px;border-radius:50%;border:2px solid var(--sep2);display:flex;align-items:center;
+  justify-content:center;transition:all .25s var(--ease-spring);flex-shrink:0;}
+.lang-btn.sel .lang-chk{background:var(--blue);border-color:var(--blue);transform:scale(1.1);}
+.lang-chk svg{width:12px;height:12px;opacity:0;stroke:#fff;transform:scale(.5);transition:all .2s;}
+.lang-btn.sel .lang-chk svg{opacity:1;transform:scale(1);}
+.lang-foot{padding:16px 20px;padding-bottom:calc(16px + var(--sb));background:var(--white);border-top:.5px solid var(--sep);}
+.btn-primary{width:100%;padding:17px;border-radius:var(--r);background:linear-gradient(135deg,var(--blue) 0%,var(--blue-d) 100%);
+  font-size:16px;font-weight:700;color:#fff;transition:all .2s var(--ease);letter-spacing:-.2px;
+  box-shadow:0 8px 20px rgba(10,132,255,.35);}
+.btn-primary:active{transform:scale(.97);box-shadow:0 4px 10px rgba(10,132,255,.3);}
+
+/* ══ LOGIN ══ */
+#scr-login{background:var(--white);align-items:center;justify-content:center;padding:32px 28px;
+  padding-top:calc(32px + var(--st));position:relative;overflow:hidden;}
+.lo-mesh{position:absolute;inset:0;opacity:.5;pointer-events:none;}
+.lo-blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.3;}
+.lo-blob.a{width:260px;height:260px;background:var(--blue);top:-100px;right:-80px;}
+.lo-blob.b{width:220px;height:220px;background:var(--teal);bottom:-60px;left:-60px;}
+.lo-hero{width:88px;height:88px;border-radius:26px;background:linear-gradient(135deg,var(--blue) 0%,var(--teal) 100%);
+  display:flex;align-items:center;justify-content:center;margin-bottom:24px;position:relative;z-index:1;
+  box-shadow:0 16px 40px rgba(10,132,255,.3);animation:iconPop .7s var(--ease-spring);}
+.lo-hero svg{width:50px;height:50px;}
+.lo-name{font-size:26px;font-weight:800;color:var(--t1);letter-spacing:-.6px;position:relative;z-index:1;animation:fadeUp .5s var(--ease) .1s both;}
+.lo-tagline{font-size:14.5px;color:var(--t2o);text-align:center;max-width:290px;line-height:1.6;margin:10px 0 32px;
+  position:relative;z-index:1;animation:fadeUp .5s var(--ease) .2s both;}
+.lo-features{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:36px;position:relative;z-index:1;
+  animation:fadeUp .5s var(--ease) .3s both;max-width:320px;}
+.lo-feat{display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:20px;background:var(--bg);
+  border:.5px solid var(--sep2);font-size:11.5px;font-weight:600;color:var(--t2);}
+.lo-feat svg{width:13px;height:13px;stroke:var(--blue);flex-shrink:0;}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;max-width:310px;padding:16px 24px;
+  border-radius:var(--r);background:var(--t1);font-size:15px;font-weight:600;color:#fff;transition:all .2s var(--ease);
+  box-shadow:var(--shadow);position:relative;z-index:1;animation:fadeUp .5s var(--ease) .4s both;}
+.btn-google:active{transform:scale(.97);}
+.btn-google svg{width:20px;height:20px;flex-shrink:0;}
+.lo-guest{margin-top:14px;font-size:13.5px;color:var(--blue);font-weight:600;position:relative;z-index:1;
+  animation:fadeUp .5s var(--ease) .5s both;padding:8px;}
+.lo-terms{font-size:11px;color:var(--t3);text-align:center;margin-top:18px;line-height:1.6;max-width:280px;
+  position:relative;z-index:1;animation:fadeUp .5s var(--ease) .6s both;}
+
+/* ══ MAIN APP ══ */
+#scr-app{background:var(--bg);}
+.app-scroll{flex:1;overflow-y:auto;padding-bottom:calc(78px + var(--sb));-webkit-overflow-scrolling:touch;}
+.app-scroll::-webkit-scrollbar{display:none;}
+.tab{display:none;}
+.tab.on{display:block;animation:fadeUp .3s var(--ease) both;}
+
+.nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;align-items:center;
+  padding:10px 6px;padding-bottom:calc(10px + var(--sb));background:rgba(255,255,255,.85);
+  backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
+  border-top:.5px solid var(--sep);z-index:100;}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px 14px;min-width:58px;
+  transition:transform .2s var(--ease-spring);}
+.nav-btn:active{transform:scale(.88);}
+.nav-btn svg{width:23px;height:23px;stroke:var(--t3);transition:all .25s var(--ease);stroke-width:1.8;}
+.nav-btn span{font-size:10px;color:var(--t3);font-weight:600;transition:color .25s;}
+.nav-btn.on svg{stroke:var(--blue);transform:translateY(-1px) scale(1.05);}
+.nav-btn.on span{color:var(--blue);}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:var(--blue);margin-top:1px;opacity:0;transition:opacity .2s;}
+.nav-btn.on .nav-dot{opacity:1;}
+
+/* ══ HOME ══ */
+.home-header{background:linear-gradient(160deg,#0A84FF 0%,#00B39C 100%);padding:calc(20px + var(--st)) 20px 32px;
+  display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;}
+.home-header::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% -10%,rgba(255,255,255,.2),transparent 50%);}
+.home-greet{font-size:13.5px;color:rgba(255,255,255,.82);margin-bottom:4px;font-weight:600;position:relative;z-index:1;}
+.home-name{font-size:24px;font-weight:800;color:#fff;letter-spacing:-.5px;position:relative;z-index:1;}
+.home-av{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.22);border:2px solid rgba(255,255,255,.5);
+  font-size:17px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  position:relative;z-index:1;transition:transform .2s var(--ease-spring);}
+.home-av:active{transform:scale(.92);}
+.home-av img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+
+.stats-strip{display:flex;margin:0 20px;margin-top:-20px;border-radius:var(--r-lg);background:var(--white);
+  box-shadow:var(--shadow-lg);overflow:hidden;position:relative;z-index:2;animation:scaleIn .5s var(--ease-spring) .1s both;}
+.stat-cell{flex:1;padding:16px 8px;text-align:center;position:relative;}
+.stat-cell+.stat-cell::before{content:'';position:absolute;left:0;top:22%;bottom:22%;width:.5px;background:var(--sep2);}
+.stat-v{font-size:24px;font-weight:800;color:var(--t1);letter-spacing:-.5px;}
+.stat-l{font-size:10.5px;color:var(--t3);margin-top:3px;font-weight:600;}
+
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:24px 20px 12px;}
+.sec-title{font-size:19px;font-weight:800;color:var(--t1);letter-spacing:-.4px;}
+
+.feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 20px;margin-bottom:4px;}
+.feat-card{padding:18px;border-radius:var(--r-lg);background:var(--white);cursor:pointer;position:relative;overflow:hidden;
+  transition:transform .18s var(--ease-spring),box-shadow .18s;box-shadow:var(--shadow-sm);animation:slideUp .4s var(--ease) both;}
+.feat-card:nth-child(1){animation-delay:.1s}.feat-card:nth-child(2){animation-delay:.15s}
+.feat-card:nth-child(3){animation-delay:.2s}.feat-card:nth-child(4){animation-delay:.25s}
+.feat-card:active{transform:scale(.95);}
+.feat-ico{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
+.feat-ico svg{width:23px;height:23px;}
+.feat-name{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:3px;letter-spacing:-.2px;}
+.feat-desc{font-size:11.5px;color:var(--t2o);line-height:1.4;}
+
+.tip-card{margin:16px 20px 0;padding:18px;border-radius:var(--r-lg);
+  background:linear-gradient(135deg,var(--blue-l) 0%,var(--teal-l) 100%);display:flex;align-items:flex-start;gap:14px;
+  animation:slideUp .4s var(--ease) .3s both;}
+.tip-icon-wrap{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.7);display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;font-size:20px;}
+.tip-label{font-size:10.5px;font-weight:800;color:var(--blue-d);letter-spacing:.06em;margin-bottom:4px;}
+.tip-text{font-size:12.5px;color:var(--t2);line-height:1.6;}
+
+.act-list{padding:0 20px;display:flex;flex-direction:column;gap:9px;margin-bottom:24px;}
+.act-item{display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:var(--r);background:var(--white);
+  box-shadow:var(--shadow-xs);}
+.act-ico{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.act-ico svg{width:19px;height:19px;}
+.act-info{flex:1;min-width:0;}
+.act-name{font-size:13px;font-weight:700;color:var(--t1);}
+.act-time{font-size:10.5px;color:var(--t3);margin-top:2px;}
+
+.bdg{padding:4px 10px;border-radius:20px;font-size:10.5px;font-weight:700;white-space:nowrap;letter-spacing:-.1px;}
+.bdg-blue{background:var(--blue-l);color:var(--blue-d);}
+.bdg-teal{background:var(--teal-l);color:#007A6B;}
+.bdg-coral{background:var(--coral-l);color:#CC2E24;}
+.bdg-amber{background:var(--amber-l);color:#B8720A;}
+.bdg-violet{background:var(--violet-l);color:#8E3CB8;}
+.bdg-mint{background:var(--mint-l);color:#1D9E42;}
+.bdg-pink{background:var(--pink-l);color:#C61762;}
+.bdg-indigo{background:var(--indigo-l);color:#3634A3;}
+
+/* ══ SCAN ══ */
+.scan-header{background:var(--white);padding:calc(18px + var(--st)) 20px 16px;border-bottom:.5px solid var(--sep);
+  display:flex;align-items:center;justify-content:space-between;}
+.scan-title{font-size:22px;font-weight:800;color:var(--t1);letter-spacing:-.5px;}
+
+.cam-wrap{margin:18px 20px;border-radius:var(--r-xl);overflow:hidden;height:240px;background:#000;position:relative;
+  box-shadow:var(--shadow-lg);animation:scaleIn .4s var(--ease-spring);}
+#scan-video{width:100%;height:100%;object-fit:cover;display:block;}
+#upload-preview{width:100%;height:100%;object-fit:cover;display:none;}
+#scan-canvas{display:none;}
+.cam-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:170px;height:115px;}
+.cf-tl,.cf-tr,.cf-bl,.cf-br{position:absolute;width:24px;height:24px;border-color:#fff;border-style:solid;}
+.cf-tl{top:0;left:0;border-width:3px 0 0 3px;border-radius:6px 0 0 0;}
+.cf-tr{top:0;right:0;border-width:3px 3px 0 0;border-radius:0 6px 0 0;}
+.cf-bl{bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 6px;}
+.cf-br{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 6px 0;}
+.cam-scanline{position:absolute;top:30%;left:8%;right:8%;height:2px;
+  background:linear-gradient(90deg,transparent,#0A84FF,transparent);box-shadow:0 0 12px 2px rgba(10,132,255,.6);
+  animation:scanmove 2.2s ease-in-out infinite;}
+@keyframes scanmove{0%,100%{top:25%}50%{top:75%}}
+.cam-live{position:absolute;top:14px;right:14px;display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:20px;
+  background:rgba(0,0,0,.5);backdrop-filter:blur(8px);}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#FF453A;animation:pulse2 1.2s infinite;}
+.live-txt{font-size:10.5px;color:#fff;font-weight:700;letter-spacing:.03em;}
+.cam-hint{position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:11.5px;color:rgba(255,255,255,.85);font-weight:600;}
+.cam-proc{position:absolute;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;}
+.proc-ring{width:52px;height:52px;border:3px solid rgba(10,132,255,.25);border-top-color:var(--blue);border-radius:50%;
+  animation:spin .9s linear infinite;}
+.proc-txt{font-size:14px;color:#fff;font-weight:600;}
+
+.scan-actions{display:flex;gap:10px;padding:0 20px;margin-bottom:18px;}
+.s-btn{flex:1;padding:14px 8px;border-radius:var(--r);font-size:12px;font-weight:700;background:var(--white);color:var(--t2);
+  transition:transform .15s var(--ease-spring);text-align:center;box-shadow:var(--shadow-xs);letter-spacing:-.1px;}
+.s-btn.pri{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-d) 100%);color:#fff;box-shadow:0 8px 20px rgba(10,132,255,.35);}
+.s-btn:active{transform:scale(.94);}
+
+.res-wrap{margin:0 20px 14px;animation:slideUp .4s var(--ease);}
+.res-card{border-radius:var(--r-lg);background:var(--white);overflow:hidden;box-shadow:var(--shadow);}
+.res-top{padding:18px;background:linear-gradient(135deg,var(--blue-l) 0%,#fff 100%);border-bottom:.5px solid var(--sep);}
+.res-drug{font-size:19px;font-weight:800;color:var(--t1);margin-bottom:8px;letter-spacing:-.4px;}
+.res-row{display:flex;gap:6px;flex-wrap:wrap;}
+.res-body{padding:16px 18px;display:flex;flex-direction:column;gap:13px;}
+.res-item{display:flex;gap:12px;}
+.res-dot{width:24px;height:24px;border-radius:8px;background:var(--blue-l);display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;margin-top:1px;}
+.res-dot svg{width:13px;height:13px;stroke:var(--blue-d);}
+.res-lbl{font-size:10.5px;font-weight:800;color:var(--t2o);letter-spacing:.05em;margin-bottom:3px;}
+.res-val{font-size:13px;color:var(--t1);line-height:1.65;}
+.res-warn{margin:0 18px 16px;padding:14px 16px;border-radius:var(--r);background:var(--amber-l);font-size:12.5px;
+  color:#8A5A08;line-height:1.6;display:flex;gap:8px;align-items:flex-start;}
+.res-save{margin:0 20px 18px;padding:16px;border-radius:var(--r);background:linear-gradient(135deg,var(--blue) 0%,var(--teal) 100%);
+  font-size:14px;font-weight:700;color:#fff;width:calc(100% - 40px);box-shadow:0 8px 20px rgba(10,132,255,.3);display:block;
+  letter-spacing:-.2px;transition:transform .15s var(--ease-spring);}
+.res-save:active{transform:scale(.97);}
+
+.howto-card{margin:0 20px 18px;padding:20px;border-radius:var(--r-lg);background:var(--white);box-shadow:var(--shadow-xs);
+  animation:fadeUp .4s var(--ease);}
+.howto-title{font-size:14.5px;font-weight:800;color:var(--t1);margin-bottom:14px;letter-spacing:-.2px;}
+.howto-step{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;}
+.howto-step:last-child{margin-bottom:0;}
+.howto-num{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--blue) 0%,var(--blue-d) 100%);
+  color:#fff;font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.howto-txt{font-size:13px;color:var(--t2);line-height:1.55;padding-top:2px;}
+
+.symp-section{padding:0 20px 20px;}
+.symp-card{border-radius:var(--r-lg);background:var(--white);overflow:hidden;box-shadow:var(--shadow-sm);}
+.symp-card-header{padding:18px;background:linear-gradient(135deg,var(--violet-l) 0%,#fff 100%);border-bottom:.5px solid var(--sep);
+  display:flex;align-items:center;gap:12px;}
+.symp-card-ico{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--violet) 0%,#8E3CB8 100%);
+  display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(175,82,222,.3);}
+.symp-card-ico svg{width:20px;height:20px;stroke:#fff;}
+.symp-card-title{font-size:15px;font-weight:800;color:var(--t1);letter-spacing:-.2px;}
+.symp-card-sub{font-size:11.5px;color:var(--t2o);margin-top:1px;}
+.symp-body{padding:16px 18px;}
+.symp-inp-row{display:flex;gap:8px;margin-bottom:12px;}
+.symp-inp{flex:1;padding:13px 16px;border-radius:var(--r);background:var(--bg);font-size:13.5px;color:var(--t1);
+  outline:none;transition:box-shadow .2s;}
+.symp-inp:focus{box-shadow:0 0 0 2px var(--blue);}
+.symp-inp::placeholder{color:var(--t3);}
+.symp-go{padding:13px 18px;border-radius:var(--r);background:linear-gradient(135deg,var(--violet) 0%,#8E3CB8 100%);
+  font-size:13px;font-weight:700;color:#fff;white-space:nowrap;box-shadow:0 4px 12px rgba(175,82,222,.3);}
+.symp-go:active{transform:scale(.95);}
+.symp-voice-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border-radius:var(--r);
+  background:var(--bg);font-size:13px;font-weight:600;color:var(--t2);margin-bottom:14px;transition:transform .15s var(--ease-spring);}
+.symp-voice-btn svg{width:16px;height:16px;stroke:var(--violet);}
+.symp-voice-btn:active{transform:scale(.97);background:var(--violet-l);}
+.symp-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.s-chip{padding:7px 14px;border-radius:20px;background:var(--bg);font-size:12px;font-weight:600;color:var(--t2);cursor:pointer;
+  transition:transform .15s var(--ease-spring);}
+.s-chip:active{transform:scale(.94);background:var(--violet-l);color:var(--violet);}
+.symp-result{padding:16px;border-radius:var(--r);background:var(--bg);font-size:13px;color:var(--t1);line-height:1.8;
+  animation:fadeUp .3s var(--ease);}
+.symp-result.loading{color:var(--t3);}
+
+.hist-sec{padding:0 20px 20px;}
+
+/* ══ HOSPITALS ══ */
+.hp-header{background:var(--white);padding:calc(18px + var(--st)) 20px 16px;border-bottom:.5px solid var(--sep);}
+.hp-title{font-size:22px;font-weight:800;color:var(--t1);margin-bottom:14px;letter-spacing:-.5px;}
+.hp-search-wrap{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:var(--r);background:var(--bg);
+  transition:box-shadow .2s;}
+.hp-search-wrap:focus-within{box-shadow:0 0 0 2px var(--blue);}
+.hp-search-wrap svg{width:17px;height:17px;stroke:var(--t3);flex-shrink:0;}
+.hp-search-wrap input{flex:1;background:none;border:none;outline:none;font-size:13.5px;color:var(--t1);width:100%;}
+.hp-search-wrap input::placeholder{color:var(--t3);}
+.hp-search-clear{width:20px;height:20px;border-radius:50%;background:var(--sep2);display:none;align-items:center;
+  justify-content:center;flex-shrink:0;}
+.hp-search-clear.show{display:flex;}
+.hp-search-clear svg{width:10px;height:10px;stroke:var(--t2);}
+
+.map-box{margin:18px 20px;border-radius:var(--r-xl);overflow:hidden;height:190px;background:var(--bg2);position:relative;
+  box-shadow:var(--shadow);animation:scaleIn .4s var(--ease-spring);}
+#map-el{width:100%;height:100%;z-index:1;}
+#map-loader{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:var(--bg2);z-index:2;}
+.map-loader-ring{width:30px;height:30px;border:2.5px solid var(--sep2);border-top-color:var(--blue);border-radius:50%;
+  animation:spin .8s linear infinite;}
+
+.chips-scroll{display:flex;gap:8px;padding:0 20px;overflow-x:auto;margin-bottom:16px;}
+.chips-scroll::-webkit-scrollbar{display:none;}
+.f-chip{padding:8px 16px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;
+  background:var(--white);color:var(--t2);transition:all .2s var(--ease);box-shadow:var(--shadow-xs);display:flex;
+  align-items:center;gap:5px;}
+.f-chip.on{background:var(--blue);color:#fff;box-shadow:0 4px 12px rgba(10,132,255,.3);}
+
+.hp-list{padding:0 20px;display:flex;flex-direction:column;gap:10px;margin-bottom:24px;}
+.hp-card{display:flex;gap:13px;align-items:flex-start;padding:15px;border-radius:var(--r-lg);background:var(--white);
+  cursor:pointer;transition:transform .15s var(--ease-spring);box-shadow:var(--shadow-xs);}
+.hp-card:active{transform:scale(.97);}
+.hp-card-ico{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.hp-card-ico svg{width:21px;height:21px;}
+.hp-info{flex:1;min-width:0;}
+.hp-name{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:3px;}
+.hp-dist{font-size:11.5px;color:var(--t3);margin-bottom:7px;}
+.hp-tags{display:flex;gap:5px;flex-wrap:wrap;}
+.hp-empty{padding:40px 20px;text-align:center;color:var(--t3);font-size:13.5px;line-height:1.7;}
+.hp-empty-ico{font-size:40px;margin-bottom:12px;}
+.hp-empty .s-btn{width:auto;}
+
+/* ══ PLACE DETAIL SHEET ══ */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199;display:none;backdrop-filter:blur(3px);
+  animation:fadeIn .25s var(--ease);}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.overlay.on{display:block;}
+.sheet{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-radius:28px 28px 0 0;padding:22px;
+  padding-bottom:calc(22px + var(--sb));transform:translateY(100%);transition:transform .4s var(--ease-spring);
+  z-index:200;box-shadow:0 -20px 60px rgba(0,0,0,.15);max-height:80vh;overflow-y:auto;}
+.sheet.on{transform:translateY(0);}
+.sheet-handle{width:38px;height:5px;border-radius:3px;background:var(--sep2);margin:0 auto 18px;}
+.sheet-top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px;}
+.sheet-name{font-size:19px;font-weight:800;color:var(--t1);letter-spacing:-.4px;flex:1;}
+.sheet-type-badge{flex-shrink:0;margin-top:2px;}
+.sheet-addr{font-size:13px;color:var(--t2o);margin-bottom:14px;line-height:1.5;display:flex;gap:6px;align-items:flex-start;}
+.sheet-addr svg{width:14px;height:14px;stroke:var(--t3);flex-shrink:0;margin-top:2px;}
+.sheet-info-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+.sheet-info-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px;background:var(--bg);}
+.sheet-info-row svg{width:16px;height:16px;stroke:var(--t2);flex-shrink:0;margin-top:1px;}
+.sheet-info-txt{font-size:12.5px;color:var(--t1);line-height:1.5;}
+.sheet-info-lbl{font-size:10px;color:var(--t3);font-weight:700;letter-spacing:.04em;margin-bottom:2px;}
+.sheet-specialties{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.sheet-btns{display:flex;gap:10px;margin-bottom:6px;}
+.sheet-btn{flex:1;padding:14px;border-radius:var(--r);background:var(--bg);font-size:13.5px;font-weight:700;color:var(--t1);
+  text-align:center;transition:transform .15s var(--ease-spring);}
+.sheet-btn:active{transform:scale(.95);}
+.sheet-btn.pri{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-d) 100%);color:#fff;box-shadow:0 6px 16px rgba(10,132,255,.3);}
+.sheet-rating-row{display:flex;align-items:center;gap:6px;margin-bottom:14px;}
+.sheet-stars{display:flex;gap:2px;}
+.sheet-stars svg{width:16px;height:16px;}
+.sheet-rating-txt{font-size:13px;color:var(--t2);font-weight:600;}
+
+/* ══ CHAT ══ */
+.chat-header{background:rgba(255,255,255,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:.5px solid var(--sep);padding:calc(14px + var(--st)) 20px 14px;display:flex;align-items:center;gap:12px;
+  position:sticky;top:0;z-index:10;}
+.chat-ai-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--blue) 0%,var(--teal) 100%);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(10,132,255,.3);}
+.chat-ai-av svg{width:21px;height:21px;}
+.chat-ai-name{font-size:15px;font-weight:800;color:var(--t1);letter-spacing:-.2px;}
+.chat-ai-status{font-size:11.5px;color:var(--mint);font-weight:600;}
+.chat-voice-btn{margin-left:auto;width:36px;height:36px;border-radius:11px;background:var(--bg);display:flex;
+  align-items:center;justify-content:center;transition:all .2s var(--ease-spring);}
+.chat-voice-btn svg{width:17px;height:17px;stroke:var(--t2);}
+.chat-voice-btn.on{background:var(--blue-l);transform:scale(1.05);}
+.chat-voice-btn.on svg{stroke:var(--blue);}
+.chat-msgs{padding:18px 16px;display:flex;flex-direction:column;gap:14px;}
+.chat-date-sep{text-align:center;font-size:11.5px;color:var(--t3);padding:4px 0;font-weight:600;}
+.msg-row{display:flex;gap:9px;align-items:flex-end;animation:slideUp .3s var(--ease);}
+.msg-row.me{flex-direction:row-reverse;}
+.msg-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--blue) 0%,var(--teal) 100%);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.msg-av svg{width:15px;height:15px;}
+.bubble{max-width:76%;padding:12px 16px;font-size:13.5px;line-height:1.6;}
+.bubble.ai{background:var(--white);color:var(--t1);border-radius:18px 18px 18px 5px;box-shadow:var(--shadow-xs);}
+.bubble.me{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-d) 100%);color:#fff;
+  border-radius:18px 18px 5px 18px;box-shadow:0 6px 16px rgba(10,132,255,.25);}
+
+/* Claude.ai-style floating composer */
+.chat-inp-bar{position:sticky;bottom:calc(66px + var(--sb));left:0;right:0;padding:12px 16px 16px;background:linear-gradient(180deg,transparent 0%,var(--bg) 30%);}
+.composer{
+  display:flex;align-items:flex-end;gap:8px;
+  padding:10px 10px 10px 18px;border-radius:26px;
+  background:var(--white);
+  box-shadow:0 4px 20px rgba(0,0,0,.1),0 1px 3px rgba(0,0,0,.06);
+  border:1px solid var(--sep2);
+  transition:box-shadow .2s,border-color .2s;
+}
+.composer:focus-within{box-shadow:0 6px 24px rgba(10,132,255,.15),0 1px 3px rgba(0,0,0,.06);border-color:var(--blue);}
+.composer textarea{
+  flex:1;background:none;border:none;outline:none;resize:none;
+  font-size:14.5px;color:var(--t1);line-height:1.5;
+  max-height:120px;min-height:24px;padding:6px 0;
+  font-family:inherit;
+}
+.composer textarea::placeholder{color:var(--t3);}
+.composer-btn{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .15s var(--ease-spring);}
+.composer-mic{background:var(--bg);}
+.composer-mic svg{width:16px;height:16px;stroke:var(--t2);}
+.composer-mic.on{background:var(--blue-l);}
+.composer-mic.on svg{stroke:var(--blue);}
+.composer-send{background:var(--t4);}
+.composer-send.ready{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-d) 100%);box-shadow:0 4px 12px rgba(10,132,255,.35);}
+.composer-send svg{width:15px;height:15px;stroke:#fff;}
+.composer-send:active{transform:scale(.85);}
+
+.typing-dots{display:flex;gap:5px;align-items:center;padding:3px 0;}
+.typing-dot{width:7px;height:7px;border-radius:50%;background:var(--t3);animation:pulse2 1.2s ease-in-out infinite;}
+.typing-dot:nth-child(2){animation-delay:.2s;}.typing-dot:nth-child(3){animation-delay:.4s;}
+
+/* ══ PROFILE ══ */
+.pr-header{background:linear-gradient(160deg,#0A84FF 0%,#00B39C 100%);padding:calc(18px + var(--st)) 20px 28px;
+  position:relative;overflow:hidden;}
+.pr-header::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% -10%,rgba(255,255,255,.2),transparent 50%);}
+.pr-header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;position:relative;z-index:1;}
+.pr-header-title{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.4px;}
+.pr-settings-btn{width:36px;height:36px;border-radius:11px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);
+  display:flex;align-items:center;justify-content:center;}
+.pr-settings-btn svg{width:17px;height:17px;stroke:#fff;}
+.pr-profile-row{display:flex;align-items:center;gap:15px;position:relative;z-index:1;}
+.pr-big-av{width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.25);border:2.5px solid rgba(255,255,255,.6);
+  font-size:22px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+.pr-big-av img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.pr-uname{font-size:18px;font-weight:800;color:#fff;letter-spacing:-.3px;}
+.pr-email{font-size:12.5px;color:rgba(255,255,255,.8);margin-top:3px;}
+
+.pr-stats{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:-14px 20px 0;position:relative;z-index:2;}
+.pr-stat-card{padding:16px;border-radius:var(--r-lg);background:var(--white);text-align:center;box-shadow:var(--shadow);
+  animation:scaleIn .4s var(--ease-spring) both;}
+.pr-stat-card:nth-child(1){animation-delay:.05s}.pr-stat-card:nth-child(2){animation-delay:.1s}
+.pr-stat-card:nth-child(3){animation-delay:.15s}.pr-stat-card:nth-child(4){animation-delay:.2s}
+.pr-stat-v{font-size:26px;font-weight:800;letter-spacing:-.5px;}
+.pr-stat-l{font-size:10.5px;color:var(--t3);margin-top:4px;font-weight:600;}
+
+.pr-section{padding:0 20px;margin-bottom:18px;margin-top:24px;}
+.pr-sec-title{font-size:12px;font-weight:800;color:var(--t3);letter-spacing:.06em;margin-bottom:10px;text-transform:uppercase;}
+.settings-card{background:var(--white);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-xs);}
+.set-row{display:flex;align-items:center;gap:13px;padding:15px 16px;border-bottom:.5px solid var(--sep);cursor:pointer;
+  transition:background .15s;}
+.set-row:last-child{border-bottom:none;}
+.set-row:active{background:var(--bg);}
+.set-row-ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.set-row-ico svg{width:17px;height:17px;}
+.set-row-lbl{flex:1;font-size:13.5px;font-weight:600;color:var(--t1);}
+.set-row-val{font-size:12.5px;color:var(--t3);}
+.set-chev{width:15px;height:15px;stroke:var(--t3);}
+.set-toggle{width:40px;height:24px;border-radius:12px;background:var(--blue);position:relative;flex-shrink:0;transition:background .2s;}
+.set-toggle-dot{position:absolute;right:2px;top:2px;width:20px;height:20px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.2);transition:transform .2s var(--ease-spring);}
+.set-row.danger .set-row-lbl{color:var(--coral);}
+.set-row.danger .set-row-ico{background:var(--coral-l);}
+.set-row.danger .set-row-ico svg{stroke:var(--coral);}
+
+.disclaimer{margin:0 20px 24px;padding:15px 17px;border-radius:var(--r);background:var(--amber-l);display:flex;gap:11px;
+  align-items:flex-start;}
+.disclaimer svg{width:17px;height:17px;stroke:#B8720A;flex-shrink:0;margin-top:1px;}
+.disclaimer p{font-size:11.5px;color:#8A5A08;line-height:1.6;}
+
+/* ══ PWA INSTALL BANNER ══ */
+.install-banner{position:fixed;left:16px;right:16px;bottom:calc(86px + var(--sb));background:var(--t1);border-radius:18px;
+  padding:14px 16px;display:none;align-items:center;gap:12px;z-index:300;box-shadow:0 12px 32px rgba(0,0,0,.25);
+  animation:slideUp .4s var(--ease-spring);}
+.install-banner.show{display:flex;}
+.install-ico{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--blue) 0%,var(--teal) 100%);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.install-txt{flex:1;}
+.install-title{font-size:13px;font-weight:700;color:#fff;}
+.install-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:1px;}
+.install-btn{padding:8px 16px;border-radius:20px;background:var(--blue);font-size:12.5px;font-weight:700;color:#fff;flex-shrink:0;}
+.install-close{width:24px;height:24px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.install-close svg{width:14px;height:14px;stroke:rgba(255,255,255,.5);}
+
+/* ══ TOAST ══ */
+.toast{position:fixed;bottom:calc(86px + var(--sb));left:50%;transform:translateX(-50%) translateY(20px) scale(.9);
+  background:rgba(0,0,0,.85);color:#fff;border-radius:26px;padding:12px 22px;font-size:13.5px;font-weight:600;
+  opacity:0;transition:all .35s var(--ease-spring);z-index:500;white-space:nowrap;pointer-events:none;
+  backdrop-filter:blur(10px);box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:calc(100vw - 40px);}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
+
+.user-pin{width:16px;height:16px;border-radius:50%;background:#0A84FF;border:3px solid #fff;box-shadow:0 2px 8px rgba(10,132,255,.5);}
+.place-pin{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;}
+.place-pin-emoji{transform:rotate(45deg);font-size:13px;}
+.leaflet-container{background:var(--bg2)!important;font-family:'Inter',sans-serif!important;}
+.leaflet-control-attribution{font-size:8px!important;background:rgba(255,255,255,.7)!important;}
+
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="scr-splash" class="scr on">
+  <div class="mesh-bg"><div class="mesh-blob b1"></div><div class="mesh-blob b2"></div><div class="mesh-blob b3"></div></div>
+  <div class="sp-content">
+    <div class="sp-icon">
+      <svg viewBox="0 0 56 56" fill="none">
+        <circle cx="28" cy="28" r="12" stroke="white" stroke-width="2.5"/>
+        <path d="M23 28l4.5 4.5L35 23" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="28" cy="12" r="3.5" fill="white" opacity=".8"/><circle cx="44" cy="28" r="3.5" fill="white" opacity=".8"/>
+        <circle cx="28" cy="44" r="3.5" fill="white" opacity=".8"/><circle cx="12" cy="28" r="3.5" fill="white" opacity=".8"/>
+      </svg>
+    </div>
+    <div class="sp-name">COSMOS Arogya</div>
+    <div class="sp-sub">Your AI Health Companion</div>
+    <div class="sp-dots"><div class="sp-dot active"></div><div class="sp-dot active"></div><div class="sp-dot active"></div></div>
+  </div>
+</div>
+
+<div id="scr-lang" class="scr">
+  <div class="lang-top">
+    <div class="lang-logo-row">
+      <div class="lang-logo-ico"><svg viewBox="0 0 56 56" fill="none" width="22" height="22"><circle cx="28" cy="28" r="12" stroke="white" stroke-width="2.5"/><path d="M23 28l4.5 4.5L35 23" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="28" cy="12" r="3.5" fill="white" opacity=".8"/><circle cx="44" cy="28" r="3.5" fill="white" opacity=".8"/><circle cx="28" cy="44" r="3.5" fill="white" opacity=".8"/><circle cx="12" cy="28" r="3.5" fill="white" opacity=".8"/></svg></div>
+      <div class="lang-logo-name">COSMOS Arogya</div>
+    </div>
+    <div class="lang-title">Choose your language</div>
+    <div class="lang-hint">மொழி தேர்ந்தெடுக்கவும் · भाषा चुनें · భాష ఎంచుకోండి · ഭാഷ തിരഞ്ഞെടുക്കുക</div>
+  </div>
+  <div class="lang-list">
+    <button class="lang-btn sel" data-lang="en" onclick="selLang(this)"><span class="lang-flag">🇬🇧</span><div class="lang-inf"><div class="lang-nm">English</div><div class="lang-nat">English</div></div><div class="lang-chk"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div></button>
+    <button class="lang-btn" data-lang="ta" onclick="selLang(this)"><span class="lang-flag">🇮🇳</span><div class="lang-inf"><div class="lang-nm">Tamil</div><div class="lang-nat">தமிழ்</div></div><div class="lang-chk"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div></button>
+    <button class="lang-btn" data-lang="hi" onclick="selLang(this)"><span class="lang-flag">🇮🇳</span><div class="lang-inf"><div class="lang-nm">Hindi</div><div class="lang-nat">हिन्दी</div></div><div class="lang-chk"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div></button>
+    <button class="lang-btn" data-lang="te" onclick="selLang(this)"><span class="lang-flag">🇮🇳</span><div class="lang-inf"><div class="lang-nm">Telugu</div><div class="lang-nat">తెలుగు</div></div><div class="lang-chk"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div></button>
+    <button class="lang-btn" data-lang="ml" onclick="selLang(this)"><span class="lang-flag">🇮🇳</span><div class="lang-inf"><div class="lang-nm">Malayalam</div><div class="lang-nat">മലയാളം</div></div><div class="lang-chk"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div></button>
+  </div>
+  <div class="lang-foot"><button class="btn-primary" onclick="langContinue()">Continue →</button></div>
+</div>
+
+<div id="scr-login" class="scr">
+  <div class="lo-mesh"><div class="lo-blob a"></div><div class="lo-blob b"></div></div>
+  <div class="lo-hero"><svg viewBox="0 0 56 56" fill="none" width="50" height="50"><circle cx="28" cy="28" r="12" stroke="white" stroke-width="2.5"/><path d="M23 28l4.5 4.5L35 23" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="28" cy="12" r="3.5" fill="white" opacity=".8"/><circle cx="44" cy="28" r="3.5" fill="white" opacity=".8"/><circle cx="28" cy="44" r="3.5" fill="white" opacity=".8"/><circle cx="12" cy="28" r="3.5" fill="white" opacity=".8"/></svg></div>
+  <div class="lo-name">COSMOS Arogya</div>
+  <div class="lo-tagline">Scan medicines · Find hospitals · Get AI health guidance in your language</div>
+  <div class="lo-features">
+    <div class="lo-feat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 12l2 2 4-4"/></svg>AI MediScanner</div>
+    <div class="lo-feat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>Hospital Finder</div>
+    <div class="lo-feat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>AI Health Chat</div>
+    <div class="lo-feat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>Voice & Vision</div>
+    <div class="lo-feat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Symptom Checker</div>
+  </div>
+  <button class="btn-google" onclick="googleLogin()">
+    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+    Continue with Google
+  </button>
+  <button class="lo-guest" onclick="continueAsGuest()">Continue as Guest →</button>
+  <div class="lo-terms">By continuing you agree to our Terms of Service and Privacy Policy.<br>AI responses are informational only — always consult a qualified doctor.</div>
+</div>
+
+<div id="scr-app" class="scr">
+  <div class="app-scroll" id="app-scroll">
+
+    <div id="tab-home" class="tab on">
+      <div class="home-header">
+        <div><div class="home-greet" id="hm-greet">Good morning 🌿</div><div class="home-name" id="hm-name">Loading…</div></div>
+        <div class="home-av" id="hm-av" onclick="goTab('profile')">?</div>
+      </div>
+      <div class="stats-strip">
+        <div class="stat-cell"><div class="stat-v" id="st-scans" style="color:var(--blue)">—</div><div class="stat-l">Scans</div></div>
+        <div class="stat-cell"><div class="stat-v" id="st-hosp" style="color:var(--teal)">—</div><div class="stat-l">Hospitals</div></div>
+        <div class="stat-cell"><div class="stat-v" id="st-chats" style="color:var(--violet)">—</div><div class="stat-l">Chats</div></div>
+      </div>
+      <div class="sec-hdr"><div class="sec-title">Features</div></div>
+      <div class="feat-grid">
+        <div class="feat-card" onclick="goTab('scan')">
+          <div class="feat-ico" style="background:var(--blue-l)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <div class="feat-name">MediScanner</div><div class="feat-desc">Scan medicines, prescriptions & reports</div>
+        </div>
+        <div class="feat-card" onclick="goTab('hospitals')">
+          <div class="feat-ico" style="background:var(--teal-l)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
+          <div class="feat-name">Hospitals</div><div class="feat-desc">Find nearby specialists & clinics</div>
+        </div>
+        <div class="feat-card" onclick="goTab('chat')">
+          <div class="feat-ico" style="background:var(--violet-l)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+          <div class="feat-name">AI Chat</div><div class="feat-desc">Health questions in your language</div>
+        </div>
+        <div class="feat-card" onclick="goTab('scan');setTimeout(()=>document.getElementById('symp-section').scrollIntoView({behavior:'smooth'}),350)">
+          <div class="feat-ico" style="background:var(--coral-l)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
+          <div class="feat-name">Symptoms</div><div class="feat-desc">Describe & get specialist advice</div>
+        </div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon-wrap">💡</div>
+        <div><div class="tip-label">HEALTH TIP</div><div class="tip-text" id="home-tip">Drink at least 8 glasses of water daily to stay hydrated.</div></div>
+      </div>
+      <div class="sec-hdr"><div class="sec-title">Recent Activity</div></div>
+      <div class="act-list" id="home-activity"><div style="padding:24px;text-align:center;color:var(--t3);font-size:13.5px;">Loading your activity…</div></div>
+    </div>
+
+    <div id="tab-scan" class="tab">
+      <div class="scan-header"><div class="scan-title">MediScanner</div><span class="bdg bdg-blue">AI Vision</span></div>
+      <div class="cam-wrap">
+        <video id="scan-video" autoplay playsinline muted></video>
+        <img id="upload-preview" alt=""/>
+        <canvas id="scan-canvas"></canvas>
+        <div class="cam-frame" id="cam-frame"><div class="cf-tl"></div><div class="cf-tr"></div><div class="cf-bl"></div><div class="cf-br"></div><div class="cam-scanline"></div></div>
+        <div class="cam-hint" id="cam-hint">Point camera at medicine, prescription or report</div>
+        <div class="cam-live" id="cam-live"><div class="live-dot"></div><span class="live-txt">LIVE</span></div>
+        <div class="cam-proc hidden" id="cam-proc"><div class="proc-ring"></div><div class="proc-txt">Analysing with AI…</div></div>
+      </div>
+      <div class="scan-actions">
+        <button class="s-btn pri" onclick="doCapture()">📷 Scan Now</button>
+        <button class="s-btn" onclick="document.getElementById('file-inp').click()">📁 Upload</button>
+        <button class="s-btn" id="voice-btn" onclick="doVoiceScan()">🎤 Voice</button>
+      </div>
+      <input type="file" id="file-inp" accept="image/*" style="display:none" onchange="doFileUpload(event)"/>
+      <div id="scan-result" class="hidden">
+        <div class="res-wrap"><div class="res-card">
+          <div class="res-top"><div class="res-drug" id="res-name">—</div><div class="res-row"><span class="bdg bdg-blue" id="res-cat">—</span></div></div>
+          <div class="res-body" id="res-body"></div>
+        </div></div>
+        <div class="res-warn" id="res-warn-box" style="display:none"><span>⚠️</span><span id="res-warn-txt"></span></div>
+        <button class="res-save" onclick="saveScan()">💾 Save to my health records</button>
+      </div>
+      <div id="scan-howto" class="howto-card">
+        <div class="howto-title">How to use MediScanner</div>
+        <div class="howto-step"><div class="howto-num">1</div><div class="howto-txt">Tap <strong>Scan Now</strong> — camera opens. Point it at any medicine box, pill packet, prescription or lab report.</div></div>
+        <div class="howto-step"><div class="howto-num">2</div><div class="howto-txt">Tap <strong>Upload</strong> to pick a photo from your gallery instead.</div></div>
+        <div class="howto-step"><div class="howto-num">3</div><div class="howto-txt">Tap <strong>Voice</strong> — speak the medicine name and AI will explain it.</div></div>
+      </div>
+      <div id="symp-section" class="symp-section" style="margin-top:6px;">
+        <div class="sec-hdr" style="padding-left:0;padding-right:0;"><div class="sec-title">Symptom Checker</div></div>
+        <div class="symp-card">
+          <div class="symp-card-header">
+            <div class="symp-card-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
+            <div><div class="symp-card-title">What are you feeling?</div><div class="symp-card-sub">AI suggests the right specialist for you</div></div>
+          </div>
+          <div class="symp-body">
+            <div class="symp-inp-row">
+              <input class="symp-inp" id="symp-inp" placeholder="e.g. headache, fever, chest pain…" onkeydown="if(event.key==='Enter')runSymp()"/>
+              <button class="symp-go" onclick="runSymp()">Check</button>
+            </div>
+            <button class="symp-voice-btn" onclick="sympVoice()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>Speak your symptoms</button>
+            <div class="symp-chips">
+              <span class="s-chip" onclick="qSymp('Fever and chills')">🌡 Fever</span>
+              <span class="s-chip" onclick="qSymp('Chest pain and shortness of breath')">💓 Chest pain</span>
+              <span class="s-chip" onclick="qSymp('Severe headache and dizziness')">🧠 Headache</span>
+              <span class="s-chip" onclick="qSymp('Stomach pain and nausea')">🤢 Stomach</span>
+              <span class="s-chip" onclick="qSymp('Back pain')">🦴 Back pain</span>
+              <span class="s-chip" onclick="qSymp('Cough and cold with sore throat')">😷 Cold & cough</span>
+              <span class="s-chip" onclick="qSymp('Skin rash and itching')">🩹 Skin rash</span>
+              <span class="s-chip" onclick="qSymp('Joint pain and swelling')">🦵 Joint pain</span>
+            </div>
+            <div class="symp-result hidden" id="symp-result"></div>
+          </div>
+        </div>
+      </div>
+      <div class="hist-sec">
+        <div class="sec-hdr" style="padding-left:0;padding-right:0;"><div class="sec-title">Scan History</div></div>
+        <div class="act-list" id="scan-hist" style="padding:0;"><div style="padding:24px 0;text-align:center;color:var(--t3);font-size:13.5px;">Your scan history will appear here.</div></div>
+      </div>
+    </div>
+
+    <div id="tab-hospitals" class="tab">
+      <div class="hp-header">
+        <div class="hp-title">Nearby Hospitals</div>
+        <div class="hp-search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input id="hp-inp" placeholder="Search hospitals, pharmacies…" oninput="hpFilter(this.value)"/>
+          <div class="hp-search-clear" id="hp-clear" onclick="hpClearSearch()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+        </div>
+      </div>
+      <div class="map-box">
+        <div id="map-el"></div>
+        <div id="map-loader"><div class="map-loader-ring"></div><div style="font-size:12.5px;color:var(--t3);font-weight:600">Getting your location…</div></div>
+      </div>
+      <div class="chips-scroll" id="hp-chips">
+        <div class="f-chip on" onclick="hpChip(this,'all')">All</div>
+        <div class="f-chip" onclick="hpChip(this,'hospital')">🏥 Hospitals</div>
+        <div class="f-chip" onclick="hpChip(this,'pharmacy')">💊 Pharmacy</div>
+        <div class="f-chip" onclick="hpChip(this,'dental')">🦷 Dental</div>
+        <div class="f-chip" onclick="hpChip(this,'ortho')">🦴 Ortho</div>
+        <div class="f-chip" onclick="hpChip(this,'eye')">👁 Eye Care</div>
+        <div class="f-chip" onclick="hpChip(this,'clinic')">🩺 Clinics</div>
+      </div>
+      <div class="hp-list" id="hp-list"><div class="hp-empty"><div class="hp-empty-ico">🏥</div>Allow location access to find nearby hospitals and pharmacies.</div></div>
+    </div>
+
+    <div id="tab-chat" class="tab">
+      <div class="chat-header">
+        <div class="chat-ai-av"><svg viewBox="0 0 56 56" fill="none" width="21" height="21"><circle cx="28" cy="28" r="12" stroke="white" stroke-width="2.5"/><path d="M23 28l4.5 4.5L35 23" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="28" cy="12" r="3.5" fill="white" opacity=".8"/><circle cx="44" cy="28" r="3.5" fill="white" opacity=".8"/><circle cx="28" cy="44" r="3.5" fill="white" opacity=".8"/><circle cx="12" cy="28" r="3.5" fill="white" opacity=".8"/></svg></div>
+        <div><div class="chat-ai-name">Arogya AI</div><div class="chat-ai-status">● Online · Multilingual</div></div>
+      </div>
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="chat-date-sep">Today</div>
+        <div class="msg-row">
+          <div class="msg-av"><svg viewBox="0 0 56 56" fill="none" width="15" height="15"><circle cx="28" cy="28" r="12" stroke="white" stroke-width="2.5"/><path d="M23 28l4.5 4.5L35 23" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="bubble ai">Hello! I'm Arogya AI, your personal health companion. I can help you understand medicines, find the right hospital, check symptoms and answer health questions — in English, Tamil, Hindi, Telugu or Malayalam. How can I help you today?</div>
+        </div>
+      </div>
+      <div class="chat-inp-bar">
+        <div class="composer">
+          <textarea id="chat-inp" placeholder="Message Arogya AI…" rows="1" oninput="autoGrow(this);toggleSend()" onkeydown="handleComposerKey(event)"></textarea>
+          <button class="composer-btn composer-mic" id="chat-mic" onclick="chatVoice()" title="Voice input"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg></button>
+          <button class="composer-btn composer-send" id="chat-send-btn" onclick="sendMsg()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-profile" class="tab">
+      <div class="pr-header">
+        <div class="pr-header-top"><div class="pr-header-title">My Profile</div>
+          <button class="pr-settings-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+        </div>
+        <div class="pr-profile-row">
+          <div class="pr-big-av" id="pr-av">?</div>
+          <div><div class="pr-uname" id="pr-name">—</div><div class="pr-email" id="pr-email">—</div></div>
+        </div>
+      </div>
+      <div class="pr-stats">
+        <div class="pr-stat-card"><div class="pr-stat-v" id="pr-scans" style="color:var(--blue)">—</div><div class="pr-stat-l">Total Scans</div></div>
+        <div class="pr-stat-card"><div class="pr-stat-v" id="pr-hosp" style="color:var(--teal)">—</div><div class="pr-stat-l">Saved Hospitals</div></div>
+        <div class="pr-stat-card"><div class="pr-stat-v" id="pr-chats" style="color:var(--violet)">—</div><div class="pr-stat-l">Chat Sessions</div></div>
+        <div class="pr-stat-card"><div class="pr-stat-v" id="pr-lang" style="color:var(--amber);font-size:18px">English</div><div class="pr-stat-l">Language</div></div>
+      </div>
+      <div class="pr-section">
+        <div class="pr-sec-title">Account Settings</div>
+        <div class="settings-card">
+          <div class="set-row" onclick="showLangScreen()">
+            <div class="set-row-ico" style="background:var(--blue-l)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg></div>
+            <span class="set-row-lbl">Language</span><span class="set-row-val" id="set-lang-val">English</span>
+            <svg class="set-chev" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="set-row"><div class="set-row-ico" style="background:var(--amber-l)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div><span class="set-row-lbl">Notifications</span><div class="set-toggle"><div class="set-toggle-dot"></div></div></div>
+          <div class="set-row"><div class="set-row-ico" style="background:var(--violet-l)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><span class="set-row-lbl">Privacy & Data</span><svg class="set-chev" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></div>
+          <div class="set-row danger" onclick="doSignOut()"><div class="set-row-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div><span class="set-row-lbl">Sign Out</span></div>
+        </div>
+      </div>
+      <div class="pr-section">
+        <div class="pr-sec-title">About</div>
+        <div class="settings-card"><div class="set-row"><div class="set-row-ico" style="background:var(--blue-l)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><span class="set-row-lbl">COSMOS Arogya</span><span class="set-row-val">v3.0.0</span></div></div>
+      </div>
+      <div class="disclaimer">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <p>COSMOS Arogya provides AI-generated health information for educational purposes only. Always consult a qualified medical professional for diagnosis and treatment.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn on" id="nav-home" onclick="goTab('home')"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span><div class="nav-dot"></div></button>
+    <button class="nav-btn" id="nav-scan" onclick="goTab('scan')"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 12l2 2 4-4"/></svg><span>Scan</span><div class="nav-dot"></div></button>
+    <button class="nav-btn" id="nav-hospitals" onclick="goTab('hospitals')"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg><span>Hospitals</span><div class="nav-dot"></div></button>
+    <button class="nav-btn" id="nav-chat" onclick="goTab('chat')"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span>Chat</span><div class="nav-dot"></div></button>
+    <button class="nav-btn" id="nav-profile" onclick="goTab('profile')"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span><div class="nav-dot"></div></button>
+  </nav>
+</div>
+
+<div class="overlay" id="sh-ov" onclick="closeSheet()"></div>
+<div class="sheet" id="hosp-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-top-row"><div class="sheet-name" id="sh-name">—</div><div class="sheet-type-badge" id="sh-type-badge"></div></div>
+  <div class="sheet-rating-row" id="sh-rating-row"></div>
+  <div class="sheet-addr"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><span id="sh-addr">—</span></div>
+  <div class="sheet-info-grid" id="sh-info-grid"></div>
+  <div class="sheet-specialties" id="sh-specialties"></div>
+  <div class="sheet-btns">
+    <div class="sheet-btn pri" onclick="openDir()">Directions</div>
+    <div class="sheet-btn" onclick="saveHosp()">Save</div>
+  </div>
+</div>
+
+<div class="install-banner" id="install-banner">
+  <div class="install-ico"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+  <div class="install-txt"><div class="install-title">Install COSMOS Arogya</div><div class="install-sub">Add to your home screen for the full app</div></div>
+  <button class="install-btn" onclick="doInstall()">Install</button>
+  <button class="install-close" onclick="dismissInstall()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+'use strict';
+/* ════════════════════════════════════════════════
+   COSMOS AROGYA v3 — Production JS
+   AI: server-side proxy (/api/chat) — NO login ever, for any user
+   Maps: Leaflet + OpenStreetMap + Overpass (free, no key)
+   ════════════════════════════════════════════════ */
+
+window.FIREBASE_CONFIG = {
+apiKey: "AIzaSyCD5g5tdw2dhSg-Rtz-TVp1zwlZ4LB7osE",
+  authDomain: "cosmos-arogya.firebaseapp.com",
+  projectId: "cosmos-arogya",
+  storageBucket: "cosmos-arogya.firebasestorage.app",
+  messagingSenderId: "1036043165773",
+  appId: "1:1036043165773:web:e12f56a97627e00778fc04"
+};
+window.FIREBASE_ENABLED = true; // flip true once you add real Firebase keys
+
+let auth = null, db = null;
+if (window.FIREBASE_ENABLED) {
+  try { firebase.initializeApp(window.FIREBASE_CONFIG); auth = firebase.auth(); db = firebase.firestore(); }
+  catch(e) { console.warn('Firebase init failed:', e.message); }
+}
+
+let CU = null, isGuest = false, LANG = 'en';
+let camStream = null, lastScan = null, selPlace = null;
+let leafletMap = null, mapInitDone = false, placeMarkers = [];
+let deferredInstallPrompt = null;
+
+const LANG_NAMES = {en:'English',ta:'Tamil',hi:'Hindi',te:'Telugu',ml:'Malayalam'};
+const LANG_CODES = {en:'en-IN',ta:'ta-IN',hi:'hi-IN',te:'te-IN',ml:'ml-IN'};
+const HEALTH_TIPS = [
+  'Drink at least 8 glasses of water daily to support kidney function.',
+  'Walk 30 minutes a day to improve heart health significantly.',
+  'Get 7–9 hours of sleep for optimal immune function.',
+  'Wash hands for 20 seconds to prevent most common infections.',
+  'Eat 5 servings of fruits and vegetables every day.',
+  'Take a 5-minute screen break every hour to protect your eyes.',
+];
+const LS = { scans:'ca_scans', hosp:'ca_hospitals', chats:'ca_chats' };
+
+function lsGet(k){ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch{ return []; } }
+function lsAdd(k,item){ const a=lsGet(k); a.unshift({...item,ts:Date.now()}); localStorage.setItem(k,JSON.stringify(a.slice(0,100))); }
+function lsCount(k){ return lsGet(k).length; }
+function show(id){ document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on')); document.getElementById(id).classList.add('on'); }
+function $id(id){ return document.getElementById(id); }
+function setTxt(id,v){ const el=$id(id); if(el) el.textContent=v; }
+function esc(s){ return String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+
+// ── HAPTICS — subtle native-feeling tap feedback where supported ──
+function haptic(ms){ if (navigator.vibrate) { try { navigator.vibrate(ms||8); } catch(e){} } }
+document.addEventListener('click', e => {
+  if (e.target.closest('.nav-btn, .feat-card, .s-btn, .f-chip, .hp-card, .lang-btn, .sheet-btn, .composer-send')) haptic(8);
+}, true);
+
+// ── PWA INSTALL ──
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (!localStorage.getItem('ca_install_dismissed')) {
+    setTimeout(() => $id('install-banner')?.classList.add('show'), 4000);
+  }
+});
+function doInstall() {
+  if (!deferredInstallPrompt) { toast('App already installed or not supported here'); return; }
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') toast('✓ Installing COSMOS Arogya…');
+    deferredInstallPrompt = null;
+    $id('install-banner').classList.remove('show');
+  });
+}
+function dismissInstall() {
+  $id('install-banner').classList.remove('show');
+  localStorage.setItem('ca_install_dismissed', '1');
+}
+window.addEventListener('appinstalled', () => { toast('✓ COSMOS Arogya installed!'); $id('install-banner').classList.remove('show'); });
+
+// ── BOOT ──
+window.addEventListener('load', () => {
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  LANG = localStorage.getItem('ca_lang') || 'en';
+  $id('home-tip').textContent = HEALTH_TIPS[Math.floor(Math.random()*HEALTH_TIPS.length)];
+  setGreeting();
+  const savedUser = localStorage.getItem('ca_user');
+  setTimeout(() => {
+    if (auth) {
+      auth.onAuthStateChanged(u => {
+        if (u) { CU=u; isGuest=false; afterLogin(u); }
+        else if (savedUser) { CU=JSON.parse(savedUser); isGuest=true; afterLogin(CU); }
+        else show(localStorage.getItem('ca_visited') ? 'scr-login' : 'scr-lang');
+      });
+    } else if (savedUser) { CU=JSON.parse(savedUser); isGuest=true; afterLogin(CU); }
+    else show(localStorage.getItem('ca_visited') ? 'scr-login' : 'scr-lang');
+  }, 2200);
+});
+function setGreeting(){ const h=new Date().getHours(); setTxt('hm-greet', h<12?'Good morning 🌿':h<17?'Good afternoon ☀️':'Good evening 🌙'); }
+
+// ── LANGUAGE ──
+function selLang(btn){ document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); LANG=btn.dataset.lang; }
+function langContinue(){ localStorage.setItem('ca_lang',LANG); localStorage.setItem('ca_visited','1'); updLangUI(); show('scr-login'); }
+function showLangScreen(){ show('scr-lang'); }
+function updLangUI(){ const n=LANG_NAMES[LANG]||'English'; setTxt('pr-lang',n); setTxt('set-lang-val',n); }
+
+// ── AUTH ──
+function googleLogin(){
+  if (!auth) { toast('Sign-in not configured — continuing as guest'); continueAsGuest(); return; }
+  const p = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(p).then(r=>{ CU=r.user; isGuest=false; syncUser(); afterLogin(r.user); })
+    .catch(e=>toast('Sign in failed: '+e.message));
+}
+function continueAsGuest(){
+  const guestId = 'guest_'+(localStorage.getItem('ca_guest_id')||Date.now());
+  localStorage.setItem('ca_guest_id',guestId);
+  CU = { uid:guestId, displayName:'Guest User', email:'Using locally on this device', photoURL:null };
+  isGuest = true;
+  localStorage.setItem('ca_user', JSON.stringify(CU));
+  afterLogin(CU);
+}
+function doSignOut(){
+  if (!confirm('Sign out of COSMOS Arogya?')) return;
+  localStorage.removeItem('ca_user');
+  if (auth && !isGuest) auth.signOut();
+  CU = null; camStop(); show('scr-login');
+}
+function syncUser(){
+  if (!CU || !db || isGuest) return;
+  db.collection('users').doc(CU.uid).set({ name:CU.displayName, email:CU.email, photoURL:CU.photoURL||null,
+    language:LANG, lastSeen:firebase.firestore.FieldValue.serverTimestamp() }, {merge:true}).catch(()=>{});
+}
+function afterLogin(u){
+  const name = u.displayName || 'User';
+  const init = name.charAt(0).toUpperCase();
+  setTxt('hm-name', name.split(' ')[0]); setTxt('pr-name', name); setTxt('pr-email', u.email||'');
+  ['hm-av','pr-big-av'].forEach(id => {
+    const el = $id(id); if (!el) return;
+    if (u.photoURL) el.innerHTML = `<img src="${u.photoURL}" onerror="this.parentElement.textContent='${init}'"/>`;
+    else el.textContent = init;
+  });
+  updLangUI(); show('scr-app'); goTab('home'); loadStats(); loadActivity();
+}
+
+// ── STATS / ACTIVITY ──
+async function loadStats(){
+  let sv,hv,cv;
+  if (CU && db && !isGuest) {
+    try {
+      const [sc,ho,ch] = await Promise.all([
+        db.collection('users').doc(CU.uid).collection('scans').get(),
+        db.collection('users').doc(CU.uid).collection('hospitals').get(),
+        db.collection('users').doc(CU.uid).collection('chats').get()
+      ]);
+      sv=sc.size; hv=ho.size; cv=ch.size;
+    } catch(e){ sv=lsCount(LS.scans); hv=lsCount(LS.hosp); cv=lsCount(LS.chats); }
+  } else { sv=lsCount(LS.scans); hv=lsCount(LS.hosp); cv=lsCount(LS.chats); }
+  ['st-scans','pr-scans'].forEach(id=>setTxt(id,sv));
+  ['st-hosp','pr-hosp'].forEach(id=>setTxt(id,hv));
+  ['st-chats','pr-chats'].forEach(id=>setTxt(id,cv));
+}
+async function loadActivity(){
+  const list=$id('home-activity'), hist=$id('scan-hist');
+  let scans=[];
+  if (CU && db && !isGuest) {
+    try {
+      const snaps = await db.collection('users').doc(CU.uid).collection('scans').orderBy('ts','desc').limit(6).get();
+      snaps.forEach(doc=>{ const d=doc.data(); scans.push({name:d.name,ts:d.ts?.toDate?.()?d.ts.toDate().getTime():Date.now()}); });
+    } catch(e){ scans = lsGet(LS.scans).slice(0,6); }
+  } else scans = lsGet(LS.scans).slice(0,6);
+  if (!scans.length) {
+    const empty='<div style="padding:24px;text-align:center;color:var(--t3);font-size:13.5px;">No activity yet. Scan your first medicine!</div>';
+    list.innerHTML=empty; hist.innerHTML=empty.replace('24px','24px 0'); return;
+  }
+  const html = scans.map(d=>`
+    <div class="act-item">
+      <div class="act-ico" style="background:var(--blue-l)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 12l2 2 4-4"/></svg></div>
+      <div class="act-info"><div class="act-name">${esc(d.name||'Unknown')}</div><div class="act-time">Scanned · ${timeAgo(d.ts)}</div></div>
+      <span class="bdg bdg-blue">Scan</span>
+    </div>`).join('');
+  list.innerHTML = html; hist.innerHTML = html;
+}
+function timeAgo(ts){ const s=Math.floor((Date.now()-ts)/1000); if(s<60)return'just now'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago'; }
+
+// ── NAV ──
+let curTab='home';
+function goTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
+  $id('tab-'+tab).classList.add('on'); $id('nav-'+tab).classList.add('on');
+  $id('app-scroll').scrollTo(0,0);
+  if (tab==='scan' && curTab!=='scan') camStart();
+  if (tab!=='scan' && curTab==='scan') camStop();
+  if (tab==='hospitals') initMap();
+  curTab = tab;
+}
+
+// ── AI — via server-side proxy. No key, no login, ever shown to the user. ──
+async function callAI(userText, opts) {
+  opts = opts || {};
+  const messages = [
+    { role: 'system', content: opts.system || 'You are Arogya AI, a compassionate multilingual medical assistant.' },
+    { role: 'user', content: userText }
+  ];
+  const body = { messages };
+  if (opts.image) body.image = opts.image;
+
+  const resp = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await resp.json();
+  if (!resp.ok) {
+    // Full provider-by-provider failure reasons land in the browser console —
+    // open DevTools (F12) → Console to see exactly which provider failed and why
+    // (e.g. missing key, decommissioned model, rate limit) instead of just
+    // the generic message shown in the chat bubble.
+    if (data.details) console.error('AI proxy failure details:', data.details);
+    throw new Error(data.error || 'AI request failed');
+  }
+  return data.text;
+}
+function cleanJSON(txt){ return txt.replace(/```json/gi,'').replace(/```/g,'').trim(); }
+function extractJSON(txt){
+  try { return JSON.parse(cleanJSON(txt)); }
+  catch { const m = txt.match(/\{[\s\S]*\}/); if (m) { try { return JSON.parse(m[0]); } catch {} } return null; }
+}
+
+// ── CAMERA ──
+async function camStart(){
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({ video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}, audio:false });
+    $id('scan-video').srcObject = camStream;
+    $id('scan-video').style.display='block'; $id('upload-preview').style.display='none';
+    $id('cam-live').classList.remove('hidden'); $id('cam-frame').classList.remove('hidden'); $id('cam-hint').classList.remove('hidden');
+  } catch(e){ toast('Camera unavailable — use Upload instead'); }
+}
+function camStop(){ if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; } }
+
+// ── SCAN ──
+async function doCapture(){
+  const v=$id('scan-video');
+  if (!v.srcObject) { await camStart(); toast('Camera ready — tap Scan Now again'); return; }
+  const c=$id('scan-canvas');
+  c.width=v.videoWidth||640; c.height=v.videoHeight||480;
+  c.getContext('2d').drawImage(v,0,0);
+  await runScan(c.toDataURL('image/jpeg',.85));
+}
+function doFileUpload(e){
+  const f=e.target.files[0]; if(!f) return; e.target.value='';
+  camStop();
+  const r=new FileReader();
+  r.onload=async ev=>{
+    const dataUrl=ev.target.result;
+    const prev=$id('upload-preview'); prev.src=dataUrl; prev.style.display='block';
+    $id('scan-video').style.display='none'; $id('cam-live').classList.add('hidden');
+    $id('cam-frame').classList.add('hidden'); $id('cam-hint').classList.add('hidden');
+    await runScan(dataUrl);
+  };
+  r.readAsDataURL(f);
+}
+async function runScan(dataUrl){
+  $id('cam-proc').classList.remove('hidden');
+  $id('scan-result').classList.add('hidden');
+  $id('scan-howto').classList.add('hidden');
+  try {
+    const prompt = `Analyse this image. If it shows a medicine, pill packet, prescription, or medical lab report, respond with ONLY this JSON (no markdown):
+{"name":"full medicine/document name","category":"Pain reliever|Antibiotic|Lab Report|Vitamin|etc","uses":"what this is used for, 2-3 clear sentences","dosage":"typical dosage instructions","sideEffects":"common side effects clearly listed","warnings":"important warnings and contraindications"}
+If NOT medical, respond with ONLY: {"error":"Not a medical item. Please point the camera at a medicine, prescription or lab report."}
+Respond in ${LANG_NAMES[LANG]||'English'}. Return ONLY the JSON object.`;
+    const txt = await callAI(prompt, { image: dataUrl, system: 'You are a highly accurate medical AI. Be precise and helpful.' });
+    const parsed = extractJSON(txt);
+    if (!parsed) throw new Error('Could not read AI response. Please try again.');
+    if (parsed.error) { toast(parsed.error); $id('scan-howto').classList.remove('hidden'); return; }
+    lastScan = parsed; renderResult(parsed);
+  } catch(err) {
+    toast('⚠ ' + (err.message || 'Scan failed. Please try again.'));
+    $id('scan-howto').classList.remove('hidden');
+  } finally { $id('cam-proc').classList.add('hidden'); }
+}
+function renderResult(r){
+  setTxt('res-name', r.name||'—'); setTxt('res-cat', r.category||'—');
+  const body=$id('res-body'); body.innerHTML='';
+  const items=[
+    {label:'USES',val:r.uses,ico:'M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z'},
+    {label:'DOSAGE',val:r.dosage,ico:'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'},
+    {label:'SIDE EFFECTS',val:r.sideEffects,ico:'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'},
+  ];
+  items.forEach(item=>{
+    if(!item.val) return;
+    body.insertAdjacentHTML('beforeend', `
+      <div class="res-item"><div class="res-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><path d="${item.ico}"/></svg></div>
+      <div><div class="res-lbl">${item.label}</div><div class="res-val">${esc(item.val)}</div></div></div>`);
+  });
+  if (r.warnings) { $id('res-warn-txt').textContent=r.warnings; $id('res-warn-box').style.display='flex'; }
+  else $id('res-warn-box').style.display='none';
+  $id('scan-result').classList.remove('hidden');
+  $id('scan-result').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function saveScan(){
+  if (!lastScan) return;
+  const rec = { name:lastScan.name, category:lastScan.category };
+  if (CU && db && !isGuest) {
+    db.collection('users').doc(CU.uid).collection('scans').add({...rec, ts:firebase.firestore.FieldValue.serverTimestamp()})
+      .then(()=>{ toast('✓ Saved to your health records'); loadStats(); loadActivity(); })
+      .catch(()=>{ lsAdd(LS.scans,rec); toast('✓ Saved locally'); loadStats(); loadActivity(); });
+  } else { lsAdd(LS.scans,rec); toast('✓ Saved to your health records'); loadStats(); loadActivity(); }
+}
+
+// ── VOICE SCAN ──
+function doVoiceScan(){
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  if (!SR) { toast('Voice not supported on this browser'); return; }
+  const rec=new SR(); rec.lang=LANG_CODES[LANG]||'en-IN'; rec.interimResults=false; rec.maxAlternatives=1;
+  const btn=$id('voice-btn'); btn.textContent='🔴 Listening…';
+  rec.start(); toast('Listening… speak the medicine name');
+  rec.onresult=async e=>{
+    btn.textContent='🎤 Voice';
+    const spoken=e.results[0][0].transcript.trim();
+    toast('Heard: '+spoken);
+    $id('cam-proc').classList.remove('hidden'); $id('scan-howto').classList.add('hidden');
+    try {
+      const txt=await callAI(`Medicine name spoken by user: "${spoken}". Return ONLY this JSON: {"name":"","category":"","uses":"","dosage":"","sideEffects":"","warnings":""}. Respond in ${LANG_NAMES[LANG]||'English'}.`,
+        { system:'You are an accurate medical AI assistant.' });
+      const p = extractJSON(txt);
+      if (!p) throw new Error('Could not process');
+      lastScan=p; renderResult(p);
+    } catch(err) { toast('⚠ '+(err.message||'Could not process voice')); $id('scan-howto').classList.remove('hidden'); }
+    finally { $id('cam-proc').classList.add('hidden'); }
+  };
+  rec.onerror=()=>{ btn.textContent='🎤 Voice'; toast('Could not hear — please try again'); };
+  rec.onend=()=>{ if(btn.textContent==='🔴 Listening…') btn.textContent='🎤 Voice'; };
+}
+
+// ── SYMPTOM CHECKER ──
+async function runSymp(){
+  const inp=$id('symp-inp').value.trim();
+  if (!inp) { toast('Please describe your symptoms'); return; }
+  const res=$id('symp-result');
+  res.classList.remove('hidden'); res.className='symp-result loading';
+  res.textContent='Arogya AI is analysing your symptoms…';
+  try {
+    const txt=await callAI(`Patient symptoms: "${inp}". Provide: 1) Likely cause (brief) 2) Which specialist doctor to see 3) Urgent warning signs 4) Home care tip. End with: "⚠️ Always consult a qualified doctor for proper diagnosis." Respond in ${LANG_NAMES[LANG]||'English'}, well-formatted with line breaks.`,
+      { system:'You are a compassionate, accurate medical AI. Never diagnose.' });
+    res.className='symp-result';
+    res.innerHTML = txt.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+    const rec={symptoms:inp,response:txt};
+    if (CU && db && !isGuest) db.collection('users').doc(CU.uid).collection('symptoms').add({...rec,ts:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{});
+  } catch(e) {
+    res.className='symp-result';
+    res.innerHTML = '<span style="color:var(--coral)">⚠ '+esc(e.message||'Could not connect. Please try again.')+'</span>';
+  }
+}
+function qSymp(s){ $id('symp-inp').value=s; runSymp(); }
+function sympVoice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if (!SR) { toast('Voice not supported on this browser'); return; }
+  const rec=new SR(); rec.lang=LANG_CODES[LANG]||'en-IN'; rec.start(); toast('Speak your symptoms…');
+  rec.onresult=e=>{ $id('symp-inp').value=e.results[0][0].transcript; runSymp(); };
+  rec.onerror=()=>toast('Could not hear — please try again');
+}
+
+// ── MAPS + CATEGORIES (Leaflet + OSM + Overpass, free, no keys) ──
+const CATEGORY_QUERIES = {
+  hospital: { amenity: 'hospital', emoji: '🏥', color: '#0A84FF', label: 'Hospital' },
+  pharmacy: { amenity: 'pharmacy', emoji: '💊', color: '#00B39C', label: 'Pharmacy' },
+  dental:   { amenity: 'dentist',  emoji: '🦷', color: '#AF52DE', label: 'Dental' },
+  clinic:   { amenity: 'clinic',   emoji: '🩺', color: '#5E5CE6', label: 'Clinic' },
+  ortho:    { emoji: '🦴', color: '#FF9F0A', label: 'Ortho' },
+  eye:      { emoji: '👁', color: '#FF2D92', label: 'Eye Care' },
+};
+// ortho & eye aren't standalone OSM amenities — detect via healthcare:speciality tag on clinics/hospitals
+const SPECIALTY_MATCH = {
+  ortho: ['orthopaedic','orthopedic','orthopaedics','orthopedics','ortho'],
+  eye:   ['ophthalmology','optometry','eye','ophthalmologist'],
+};
+
+function initMap(){
+  if (mapInitDone) return;
+  mapInitDone = true;
+  if (!navigator.geolocation) { buildMap(9.9252,78.1198); toast('Geolocation not available — showing default area'); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => buildMap(pos.coords.latitude, pos.coords.longitude),
+    ()  => { buildMap(9.9252,78.1198); toast('Using default location — allow GPS for accuracy'); },
+    { timeout: 8000 }
+  );
+}
+function buildMap(lat,lng){
+  lastKnownLatLng = { lat, lng };
+  $id('map-loader').style.display='none';
+  leafletMap = L.map('map-el', { zoomControl:false, attributionControl:true }).setView([lat,lng], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap', maxZoom:19 }).addTo(leafletMap);
+  L.control.zoom({ position:'bottomright' }).addTo(leafletMap);
+  const userIcon = L.divIcon({ className:'', html:'<div class="user-pin"></div>', iconSize:[16,16] });
+  L.marker([lat,lng], { icon:userIcon }).addTo(leafletMap).bindPopup('You are here');
+  loadCategory('all');
+}
+let activeCategory = 'all';
+// Fetch places for a specific category from the server and render them —
+// this is a real re-query, not a client-side filter, so tapping "Ortho"
+// actually asks OpenStreetMap for orthopedic-tagged places near the user.
+async function loadCategory(category){
+  if (!lastKnownLatLng) return;
+  activeCategory = category;
+  const { lat, lng } = lastKnownLatLng;
+  const hp = $id('hp-list');
+  const catLabel = (CATEGORY_QUERIES[category]?.label) || (category==='all' ? 'places' : category);
+  hp.innerHTML = `<div class="hp-empty"><div class="map-loader-ring" style="margin:0 auto 14px;"></div>Finding ${esc(catLabel.toLowerCase())} nearby…</div>`;
+
+  // Clear existing markers before loading the new category's set
+  placeMarkers.forEach(({marker}) => leafletMap.removeLayer(marker));
+  placeMarkers = [];
+
+  try {
+    const resp = await fetch(`/api/places?lat=${lat}&lng=${lng}&radius=6000&category=${encodeURIComponent(category)}`);
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Could not load places');
+    hp.innerHTML = '';
+    const els = data.elements || [];
+    if (!els.length) {
+      hp.innerHTML = `<div class="hp-empty"><div class="hp-empty-ico">${CATEGORY_QUERIES[category]?.emoji||'🏥'}</div>No ${esc(catLabel.toLowerCase())} found nearby. Try a different area, or tap retry.<br><br><button class="s-btn pri" style="display:inline-block;padding:10px 20px;margin-top:6px;" onclick="retryLoadPlaces()">Retry</button></div>`;
+      return;
+    }
+    const bounds = [];
+    els.forEach(el => { const b = addPlace(el, lat, lng); if (b) bounds.push(b); });
+    // Re-center map to fit all results for this category
+    if (bounds.length) {
+      leafletMap.fitBounds(bounds, { padding:[40,40], maxZoom:15 });
+    }
+  } catch(e) {
+    console.warn('Places load failed:', e);
+    toast('Could not load nearby places — tap retry');
+    hp.innerHTML = `<div class="hp-empty"><div class="hp-empty-ico">📡</div>Could not load nearby places right now.<br><br><button class="s-btn pri" style="display:inline-block;padding:10px 20px;margin-top:6px;" onclick="retryLoadPlaces()">Retry</button></div>`;
+  }
+}
+let lastKnownLatLng = null;
+function retryLoadPlaces(){
+  if (lastKnownLatLng) loadCategory(activeCategory);
+  else initMap();
+}
+function classifyPlace(el, queriedCategory){
+  const amenity = el.tags?.amenity;
+  const speciality = (el.tags?.['healthcare:speciality'] || '').toLowerCase();
+  let cats = [];
+  if (amenity === 'hospital') cats.push('hospital');
+  if (amenity === 'pharmacy') cats.push('pharmacy');
+  if (amenity === 'dentist') cats.push('dental');
+  if (amenity === 'clinic') cats.push('clinic');
+  if (SPECIALTY_MATCH.ortho.some(k => speciality.includes(k))) cats.push('ortho');
+  if (SPECIALTY_MATCH.eye.some(k => speciality.includes(k))) cats.push('eye');
+  if (el.tags?.shop === 'optician' || el.tags?.healthcare === 'optometrist') cats.push('eye');
+  // If the server specifically queried this category, trust that even if
+  // local tag-matching heuristics above didn't independently catch it
+  if (queriedCategory && queriedCategory !== 'all' && !cats.includes(queriedCategory)) cats.push(queriedCategory);
+  if (!cats.length) cats.push('clinic');
+  return cats;
+}
+function addPlace(el, userLat, userLng){
+  const plat = el.lat || el.center?.lat;
+  const plng = el.lon || el.center?.lon;
+  if (!plat || !plng) return null;
+  const cats = classifyPlace(el, activeCategory);
+  const primaryCat = cats[0];
+  const catInfo = CATEGORY_QUERIES[primaryCat] || CATEGORY_QUERIES.clinic;
+  const name = el.tags?.name || catInfo.label;
+  const addrParts = [el.tags?.['addr:housenumber'], el.tags?.['addr:street'], el.tags?.['addr:city']].filter(Boolean);
+  const addr = addrParts.join(', ') || 'Address not available on map data';
+  const phone = el.tags?.phone || el.tags?.['contact:phone'] || null;
+  const website = el.tags?.website || el.tags?.['contact:website'] || null;
+  const openingHours = el.tags?.opening_hours || null;
+  const emergency = el.tags?.emergency === 'yes';
+  const wheelchair = el.tags?.wheelchair;
+  const speciality = el.tags?.['healthcare:speciality'] || null;
+
+  const place = { id: el.id, name, addr, lat:plat, lng:plng, phone, website, openingHours, emergency, wheelchair, speciality, cats, catInfo };
+
+  const icon = L.divIcon({
+    className:'',
+    html:`<div class="place-pin" style="background:${catInfo.color}"><span class="place-pin-emoji">${catInfo.emoji}</span></div>`,
+    iconSize:[30,30], iconAnchor:[15,30]
+  });
+  const marker = L.marker([plat,plng], { icon }).addTo(leafletMap);
+  marker.on('click', () => openSheet(place));
+  placeMarkers.push({ marker, cats });
+
+  const dist = calcDist(userLat, userLng, plat, plng);
+  const tagsHtml = cats.map(c => {
+    const ci = CATEGORY_QUERIES[c] || { emoji:'🩺', label:c[0].toUpperCase()+c.slice(1) };
+    return `<span class="bdg" style="background:${ci.color||'#666'}22;color:${ci.color||'#666'}">${ci.emoji||''} ${ci.label||c}</span>`;
+  }).join('');
+
+  const card = document.createElement('div');
+  card.className = 'hp-card';
+  card.dataset.cats = cats.join(',');
+  card.onclick = () => openSheet(place);
+  card.innerHTML = `
+    <div class="hp-card-ico" style="background:${catInfo.color}22">
+      <span style="font-size:20px">${catInfo.emoji}</span>
+    </div>
+    <div class="hp-info">
+      <div class="hp-name">${esc(name)}</div>
+      <div class="hp-dist">${dist} km away${openingHours ? ' · ' + esc(openingHours.split(';')[0]) : ''}</div>
+      <div class="hp-tags">${tagsHtml}</div>
+    </div>`;
+  $id('hp-list').appendChild(card);
+  return [plat, plng];
+}
+function calcDist(lat1,lng1,lat2,lng2){
+  const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  const x=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return (R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))).toFixed(1);
+}
+function hpChip(el,val){
+  document.querySelectorAll('#hp-chips .f-chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  loadCategory(val);
+}
+function hpFilter(q){
+  $id('hp-clear').classList.toggle('show', q.length > 0);
+  const activeChip = document.querySelector('#hp-chips .f-chip.on');
+  const activeCat = activeChip ? (activeChip.textContent.trim()==='All' ? 'all' : null) : 'all';
+  document.querySelectorAll('#hp-list .hp-card').forEach(c=>{
+    const name = c.querySelector('.hp-name')?.textContent?.toLowerCase() || '';
+    const matchesSearch = !q || name.includes(q.toLowerCase());
+    c.style.display = matchesSearch ? 'flex' : 'none';
+  });
+}
+function hpClearSearch(){ $id('hp-inp').value=''; hpFilter(''); }
+
+function openSheet(place){
+  if (!place) return;
+  selPlace = place;
+  setTxt('sh-name', place.name);
+  $id('sh-type-badge').innerHTML = place.cats.map(c => {
+    const ci = CATEGORY_QUERIES[c] || { emoji:'🩺', label:c };
+    return `<span class="bdg" style="background:${ci.color||'#666'}22;color:${ci.color||'#666'}">${ci.emoji||''} ${ci.label||c}</span>`;
+  }).join(' ');
+  setTxt('sh-addr', place.addr);
+
+  // Rating row — OSM has no reviews, so show data-honest state instead of fake stars
+  $id('sh-rating-row').innerHTML = `<span style="font-size:12px;color:var(--t3)">📍 From OpenStreetMap community data — verify details by calling ahead</span>`;
+
+  const infoRows = [];
+  if (place.openingHours) infoRows.push({
+    ico:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>', lbl:'HOURS', txt:place.openingHours
+  });
+  if (place.phone) infoRows.push({
+    ico:'<path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z"/>', lbl:'PHONE', txt:place.phone, link:'tel:'+place.phone
+  });
+  if (place.website) infoRows.push({
+    ico:'<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/>', lbl:'WEBSITE', txt: place.website.replace(/^https?:\/\//,''), link: place.website
+  });
+  if (place.emergency) infoRows.push({
+    ico:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>', lbl:'EMERGENCY', txt:'24/7 Emergency services available'
+  });
+  if (place.wheelchair) infoRows.push({
+    ico:'<circle cx="12" cy="12" r="10"/>', lbl:'ACCESSIBILITY', txt: place.wheelchair==='yes' ? 'Wheelchair accessible' : place.wheelchair==='limited' ? 'Limited wheelchair access' : 'Accessibility info unavailable'
+  });
+  if (!infoRows.length) infoRows.push({ ico:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>', lbl:'NOTE', txt:'Detailed info (hours, phone) not available in map data for this location — try calling to confirm.' });
+
+  $id('sh-info-grid').innerHTML = infoRows.map(r => `
+    <div class="sheet-info-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${r.ico}</svg>
+      <div><div class="sheet-info-lbl">${r.lbl}</div><div class="sheet-info-txt">${r.link ? `<a href="${r.link}" style="color:var(--blue);text-decoration:none">${esc(r.txt)}</a>` : esc(r.txt)}</div></div>
+    </div>`).join('');
+
+  $id('sh-specialties').innerHTML = place.speciality
+    ? place.speciality.split(';').map(s => `<span class="bdg bdg-indigo">${esc(s.trim())}</span>`).join('')
+    : '';
+
+  $id('hosp-sheet').classList.add('on');
+  $id('sh-ov').classList.add('on');
+}
+function closeSheet(){ $id('hosp-sheet').classList.remove('on'); $id('sh-ov').classList.remove('on'); }
+function openDir(){
+  if (!selPlace) return;
+  window.open(`https://www.openstreetmap.org/directions?from=&to=${selPlace.lat},${selPlace.lng}`, '_blank');
+}
+function saveHosp(){
+  if (!selPlace) return;
+  const rec = { name:selPlace.name, address:selPlace.addr };
+  if (CU && db && !isGuest) {
+    db.collection('users').doc(CU.uid).collection('hospitals').doc(String(selPlace.id)).set({...rec, savedAt:firebase.firestore.FieldValue.serverTimestamp()})
+      .then(()=>{ toast('✓ Saved'); closeSheet(); loadStats(); })
+      .catch(()=>{ lsAdd(LS.hosp,rec); toast('✓ Saved locally'); closeSheet(); loadStats(); });
+  } else { lsAdd(LS.hosp,rec); toast('✓ Saved'); closeSheet(); loadStats(); }
+}
+
+// ── AI CHAT (claude.ai-style composer) ──
+const CHAT_SYS = `You are Arogya AI, a compassionate and accurate multilingual medical assistant.
+Help users understand medicines, find hospitals, check symptoms, and get health guidance.
+Keep replies concise (3-5 sentences). Never diagnose — always say "consult a doctor" for anything serious. Be warm and supportive.`;
+const AI_AVS = `<div class="msg-av"><svg viewBox="0 0 56 56" fill="none" width="15" height="15"><circle cx="28" cy="28" r="12" stroke="white" stroke-width="2.5"/><path d="M23 28l4.5 4.5L35 23" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+
+function autoGrow(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+function toggleSend(){
+  const has = $id('chat-inp').value.trim().length>0;
+  $id('chat-send-btn').classList.toggle('ready', has);
+}
+function handleComposerKey(e){
+  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+}
+
+async function sendMsg(){
+  const inp=$id('chat-inp');
+  const msg=inp.value.trim(); if(!msg) return;
+  inp.value=''; autoGrow(inp); toggleSend();
+  addBubble('me',msg); addTyping();
+  try {
+    const reply = await callAI(msg, { system: `${CHAT_SYS}\nRespond in ${LANG_NAMES[LANG]||'English'}.` });
+    remTyping(); addBubble('ai',reply);
+    const rec={q:msg,a:reply};
+    if (CU && db && !isGuest) db.collection('users').doc(CU.uid).collection('chats').add({...rec,ts:firebase.firestore.FieldValue.serverTimestamp()}).then(()=>loadStats()).catch(()=>{ lsAdd(LS.chats,rec); loadStats(); });
+    else { lsAdd(LS.chats,rec); loadStats(); }
+  } catch(e) {
+    remTyping();
+    addBubble('ai','⚠ '+(e.message||'Could not connect. Please check your internet and try again.'));
+  }
+}
+function addBubble(who,text){
+  const msgs=$id('chat-msgs');
+  const row=document.createElement('div');
+  row.className='msg-row'+(who==='me'?' me':'');
+  row.innerHTML = who==='ai'
+    ? `${AI_AVS}<div class="bubble ai">${text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}</div>`
+    : `<div class="bubble me">${esc(text)}</div>`;
+  msgs.appendChild(row); msgs.scrollTop=msgs.scrollHeight;
+}
+function addTyping(){
+  const msgs=$id('chat-msgs');
+  const row=document.createElement('div'); row.className='msg-row'; row.id='typing-row';
+  row.innerHTML=`${AI_AVS}<div class="bubble ai"><div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  msgs.appendChild(row); msgs.scrollTop=msgs.scrollHeight;
+}
+function remTyping(){ $id('typing-row')?.remove(); }
+function chatVoice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if (!SR) { toast('Voice input not supported on this browser'); return; }
+  const btn=$id('chat-mic');
+  const rec=new SR(); rec.lang=LANG_CODES[LANG]||'en-IN';
+  rec.start(); btn.classList.add('on'); toast('Listening…');
+  rec.onresult=e=>{ btn.classList.remove('on'); $id('chat-inp').value=e.results[0][0].transcript; autoGrow($id('chat-inp')); toggleSend(); sendMsg(); };
+  rec.onerror=()=>{ btn.classList.remove('on'); toast('Could not hear — please try again'); };
+  rec.onend=()=>btn.classList.remove('on');
+}
+
+// ── TOAST ──
+let toastT;
+function toast(msg){ const t=$id('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),3400); }
+
+// ── GLOBAL ERROR SAFETY NET ──
+// If any tap handler throws, surface it instead of failing silently.
+window.addEventListener('error', e => {
+  console.error('Unhandled error:', e.error || e.message);
+});
+window.addEventListener('unhandledrejection', e => {
+  console.error('Unhandled promise rejection:', e.reason);
+});
+
+</script>
+
+</div>
+</body>
+</html>
