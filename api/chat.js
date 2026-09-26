@@ -10,10 +10,11 @@
 // The app works with just ONE key set. More keys = more resilience under load.
 //
 // IMPORTANT: AI provider model names change/deprecate over time. If chat
-// stops working after previously working, check console.groq.com/docs/deprecations
+// stops working after previously working, check console.groq.com/docs/models
 // (or the equivalent page for whichever provider) and update the model
-// strings below — a decommissioned model ID is the most common silent-failure
-// cause for this kind of proxy.
+// strings below — a decommissioned or gated model ID is the most common
+// silent-failure cause for this kind of proxy (Groq returns a 404
+// "model does not exist or you do not have access to it" in that case).
 
 export const config = { runtime: 'edge' };
 
@@ -22,9 +23,12 @@ const SYSTEM_FALLBACK = 'You are Arogya AI, a compassionate multilingual medical
 async function tryGroq(messages, imageDataUrl) {
   const key = process.env.GROQ_API_KEY;
   if (!key) throw new Error('no-key');
-  // Current as of this build — Groq deprecates models on a rolling basis.
-  // Text: qwen/qwen3.6-27b · Vision: qwen/qwen3.8-27b (Groq's only documented vision model)
-  const model = imageDataUrl ? 'qwen/qwen3.8-27b' : 'qwen/qwen3.6-27b';
+  // Stable, generally-available Groq models (not gated/preview) as of this build.
+  // Text: llama-3.3-70b-versatile · Vision: meta-llama/llama-4-scout-17b-16e-instruct
+  // If chat breaks again with a groq-404 in the console, your account has
+  // lost access to one of these — check console.groq.com/docs/models for
+  // what's currently available on YOUR account and swap the string below.
+  const model = imageDataUrl ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'llama-3.3-70b-versatile';
   const finalMessages = imageDataUrl
     ? patchLastUserMessageWithImage(messages, imageDataUrl)
     : messages;
