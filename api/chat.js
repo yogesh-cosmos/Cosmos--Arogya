@@ -22,16 +22,21 @@ const SYSTEM_FALLBACK = 'You are Arogya AI, a compassionate multilingual medical
 async function tryGroq(messages, imageDataUrl) {
   const key = process.env.GROQ_API_KEY;
   if (!key) throw new Error('no-key');
-  // Current as of this build — Groq deprecates models on a rolling basis.
-  // Text: qwen/qwen3.6-27b · Vision: qwen/qwen3.8-27b (Groq's only documented vision model)
-  const model = imageDataUrl ? 'qwen/qwen3.8-27b' : 'qwen/qwen3.6-27b';
-  const finalMessages = imageDataUrl
-    ? patchLastUserMessageWithImage(messages, imageDataUrl)
-    : messages;
+  // Groq has no public (non-Enterprise) vision model as of this build —
+  // qwen/qwen3-vl-32b-instruct exists but is Enterprise-tier only. For
+  // image scans, skip Groq entirely and let Gemini/OpenRouter (which do
+  // support vision) handle it instead of sending an image to a text-only
+  // model, which would just error.
+  if (imageDataUrl) throw new Error('groq-no-vision-support');
+  // Verified against console.groq.com/docs/models — qwen/qwen3-32b is Groq's
+  // current, real, publicly-available Qwen model. (Previous versions of this
+  // file used invented model names like "qwen3.6-27b" that don't exist on
+  // Groq at all — always cross-check against Groq's own docs before editing.)
+  const model = 'qwen/qwen3-32b';
   const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-    body: JSON.stringify({ model, messages: finalMessages, temperature: 0.3, max_tokens: 900 })
+    body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: 900 })
   });
   if (!resp.ok) { const t = await resp.text(); throw new Error(`groq-${resp.status}: ${t.slice(0,300)}`); }
   const data = await resp.json();
