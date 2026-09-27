@@ -1,24 +1,34 @@
 // /api/brand-research.js — Vercel serverless function
-// Looks up information about a medicine brand and its manufacturer, plus
-// alternative brands with the same active ingredient.
+// Produces a RANKED comparison of the scanned medicine's brand against
+// 3-5 alternative brands with the same active ingredient.
 //
 // Uses GROQ_API_KEY (the same key your main chat already uses) — no second
-// key needed. This deliberately does NOT use Gemini's Google Search
-// grounding: Gemini's free tier is only ~15 requests/minute and hits 503
-// overload errors often at peak times, which would make this feature
-// unreliable and could drag down your main chat if it shared a key/quota.
-// Groq's free tier (30 RPM, 1,000/day per model) is meaningfully more
-// headroom for a feature used this often.
+// key needed. Groq's free tier (30 RPM, 1,000/day per model) has more
+// headroom than Gemini's free tier (~15 RPM, frequent 503s at peak times),
+// which matters for a feature that fires on every scan.
 //
-// IMPORTANT — what this does and doesn't do:
-// This draws on the model's training knowledge of manufacturers, brand
-// reputations, and known recalls up to its training cutoff. It is NOT live
-// search and can't see this week's news. It does NOT produce a numbered
-// "top 20 brands" ranking — no such official, objective, universally-agreed
-// ranking exists, and inventing one as fact would be misleading in a health
-// context. The response is explicit that this is general knowledge, not a
-// live lookup, and always points the user to verify anything important
-// (especially recalls) with their pharmacist.
+// WHAT "RANKING" MEANS HERE — please read before changing this file:
+// There is no official, objective, universally-agreed "top 20 pharma
+// brands" list anywhere. A ranking claiming to cover the whole market
+// would necessarily be the model inventing numbers that look authoritative
+// but aren't — genuinely risky in a health context.
+//
+// What IS honestly buildable: a RELATIVE ranking among the small, specific
+// set of brands actually relevant to this scan (the scanned brand + its
+// alternatives), scored on criteria an AI can reasonably assess from
+// general pharmaceutical knowledge:
+//   - manufacturer scale/reputation (large multinational vs regional vs
+//     unknown/unverifiable)
+//   - how long the brand has been established, if known
+//   - regulatory standing (any well-known, confident-only recall/warning
+//     history — never invented)
+//   - manufacturing transparency (is the manufacturer clearly identifiable)
+//
+// This produces a real #1-#5 ordering on screen, scoped honestly to "among
+// these specific brands" rather than falsely implying market-wide coverage.
+// The model is explicitly instructed to say when it doesn't have enough
+// confident information to differentiate brands, rather than inventing
+// small differences to force a clean ranking.
 
 export const config = { runtime: 'edge' };
 
@@ -30,7 +40,7 @@ export default async function handler(req) {
   const key = process.env.GROQ_API_KEY;
   if (!key) {
     return new Response(JSON.stringify({
-      error: 'Brand research requires GROQ_API_KEY to be set in Vercel.'
+      error: 'Brand ranking requires GROQ_API_KEY to be set in Vercel.'
     }), { status: 503, headers: { 'Content-Type': 'application/json' } });
   }
 
@@ -47,40 +57,51 @@ export default async function handler(req) {
 
   const prompt = `The user scanned a medicine branded "${medicineName}"${activeIngredient ? ` (active ingredient: ${activeIngredient})` : ''}.
 
-Based on your general knowledge of pharmaceutical manufacturers and brands (not live search — be honest that this is general knowledge, not today's news):
-1. Identify the likely manufacturer and their country, if you recognize this brand
-2. General manufacturer reputation — established/well-regarded, or any WELL-KNOWN historical concerns (only mention concerns you're genuinely confident about — do not invent or guess at recalls)
-3. 2-4 OTHER commonly available brands that contain the SAME active ingredient, which the user could ask their pharmacist about as alternatives
-4. An honest standing assessment: "well_established", "typical", or "limited_information" (use limited_information if you don't confidently recognize this specific brand)
+Task: produce a RANKED comparison of this brand against 3-5 OTHER real, commonly available brands containing the SAME active ingredient.
+
+Scoring criteria (score each brand 1-10 on each, based on general pharmaceutical knowledge — be honest and conservative, do not invent precision you don't have):
+- manufacturerScale: is the manufacturer a large, well-known multinational (score higher) vs regional/smaller (score lower) vs unknown/unverifiable (score lowest)
+- trackRecord: how long-established and consistently available the brand is, if known
+- regulatoryStanding: 10 if no known issues, lower ONLY if you are confident about a real, well-known historical recall or warning — never invent one to justify a lower score
+- transparency: is the manufacturer clearly identifiable and disclosed
+
+Compute overallScore as the average of the four, rounded to 1 decimal. Then RANK all brands (including "${medicineName}" itself) from highest overallScore to lowest. If you genuinely cannot differentiate two brands with confidence, give them the same score rather than inventing a tiebreaker.
 
 Respond with ONLY this JSON (no markdown fences):
 {
-  "brand": "${medicineName}",
-  "manufacturer": "name or null if not confidently known",
-  "manufacturerCountry": "country or null",
-  "standing": "well_established|typical|limited_information",
-  "standingReason": "1-2 sentences explaining the assessment, in ${langName}",
-  "recallNotices": "only a WELL-KNOWN historical issue if you're confident, else null — never invent one",
-  "alternativeBrands": [
-    {"name": "brand name", "activeIngredient": "same ingredient name", "note": "brief note, in ${langName}"}
+  "scannedBrand": "${medicineName}",
+  "activeIngredient": "the active ingredient name",
+  "ranking": [
+    {
+      "rank": 1,
+      "brand": "brand name",
+      "isScannedBrand": true or false,
+      "manufacturer": "name or null if not confidently known",
+      "manufacturerCountry": "country or null",
+      "scores": {"manufacturerScale": 0, "trackRecord": 0, "regulatoryStanding": 0, "transparency": 0},
+      "overallScore": 0.0,
+      "note": "1 short sentence on why it's ranked here, in ${langName}"
+    }
   ],
-  "disclaimer": "a sentence noting this is general knowledge, not live search, and to verify with a pharmacist, in ${langName}"
+  "scannedBrandSummary": "1-2 sentences specifically about where the scanned brand landed and why, in ${langName}. If it's rank 1-2, say something like 'this is a strong choice'. If lower, briefly say why and that alternatives above it may be worth asking a pharmacist about — without being alarmist.",
+  "confidenceNote": "1 sentence, in ${langName}, being honest about how confident this ranking is — e.g. if some brands are lesser-known ones you have limited information on, say so",
+  "disclaimer": "1 sentence, in ${langName}, noting this is general knowledge (not live market data or an official ranking), scoped only to these specific brands, and to confirm with a pharmacist before switching anything"
 }
 
-Respond in ${langName} for all text fields. If you don't recognize this specific brand with confidence, say so honestly in standingReason rather than guessing.`;
+List 4-6 brands total in the ranking array (the scanned brand plus 3-5 real alternatives). Respond in ${langName} for all text fields. If you don't recognize the scanned brand at all, still produce alternatives you do know, mark the scanned brand's manufacturer as null, and say so honestly in scannedBrandSummary.`;
 
   try {
     const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
       body: JSON.stringify({
-        model: 'qwen/qwen3.6-27b',
+        model: 'qwen/qwen3-32b',
         messages: [
-          { role: 'system', content: 'You are a careful medical information assistant. You never invent specific facts (recalls, manufacturer names) you are not confident about — you say so honestly instead.' },
+          { role: 'system', content: 'You are a careful medical information assistant producing a relative comparison among a small set of specific brands. You never invent specific facts (recalls, manufacturer names, false precision) you are not confident about — you say so honestly and score conservatively instead. You never claim to represent the whole market, only the specific brands listed.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.2,
-        max_tokens: 900
+        max_tokens: 1400
       })
     });
 
@@ -101,18 +122,23 @@ Respond in ${langName} for all text fields. If you don't recognize this specific
       if (m) { try { parsed = JSON.parse(m[0]); } catch {} }
     }
 
-    if (!parsed) {
-      return new Response(JSON.stringify({ error: 'Could not parse research results', raw: text.slice(0,500) }), {
+    if (!parsed || !Array.isArray(parsed.ranking)) {
+      return new Response(JSON.stringify({ error: 'Could not parse ranking results', raw: text.slice(0,500) }), {
         status: 502, headers: { 'Content-Type': 'application/json' }
       });
     }
+
+    // Defensive sort — trust the model's rank field, but also guarantee
+    // consistent ordering by overallScore in case rank numbers are off
+    parsed.ranking.sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
+    parsed.ranking.forEach((r, i) => { r.rank = i + 1; });
 
     return new Response(JSON.stringify(parsed), {
       status: 200, headers: { 'Content-Type': 'application/json' }
     });
 
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message || 'Brand research failed' }), {
+    return new Response(JSON.stringify({ error: e.message || 'Brand ranking failed' }), {
       status: 500, headers: { 'Content-Type': 'application/json' }
     });
   }
